@@ -1,3 +1,100 @@
+// PLayer 
+let player = {
+    level: 1,
+    xp: 0,
+    maxXP: 100,  // XP needed to level up
+    health: 100,
+    attack: 10,
+    defense: 5,
+    speed: 5,
+    skillPoints: 0,  // Points awarded on level-up
+  };
+
+// XP
+
+// Function to handle gaining XP
+function gainXP(amount) {
+    player.xp += amount;
+    checkLevelUp();  // Check if the player has enough XP to level up
+    updateXPDisplay(); // Update the UI for XP
+  }
+  
+  // Function to check if the player has leveled up
+  function checkLevelUp() {
+    if (player.xp >= player.maxXP) {
+      levelUp();
+    }
+  }
+  
+  // Function to handle leveling up
+  function levelUp() {
+    player.level++;  // Increase level
+    player.xp = 0;  // Reset XP after level-up
+    player.maxXP += 50;  // Increase XP needed for next level
+  
+    // Stat increases upon leveling up
+    player.health += 10;  // Increase max health
+    player.attack += 2;   // Increase attack
+    player.defense += 1;  // Increase defense
+    player.speed += 1;    // Increase speed
+  
+    player.skillPoints++;  // Award a skill point to unlock abilities or upgrades
+    
+    // Notify player of level-up
+    alert(`Level Up! You are now level ${player.level}.`);
+  
+    // Update the UI with new stats
+    updateStatsDisplay();
+  }
+  
+  function spendSkillPoint(stat) {
+    if (player.skillPoints > 0) {
+        switch(stat) {
+            case "health":
+                player.health += 5;  // Increase health stat
+                break;
+            case "attack":
+                player.attack += 1;  // Increase attack stat
+                break;
+            case "defense":
+                player.defense += 1;  // Increase defense stat
+                break;
+            case "speed":
+                player.speed += 1;  // Increase speed stat
+                break;
+            default:
+                alert("Invalid stat!");
+                return;
+        }
+
+        // Deduct the skill point
+        player.skillPoints--;
+        updateStatsDisplay();  // Update UI with new stats
+        alert(`You have increased ${stat} by 1.`);
+    } else {
+        alert("You don't have any skill points to spend.");
+    }
+}
+
+function updateStatsDisplay() {
+    // Update the player's stats UI
+    document.getElementById("levelDisplay").innerText = `Level: ${player.level}`;
+    document.getElementById("xpDisplay").innerText = `XP: ${player.xp} / ${player.maxXP}`;
+    document.getElementById("healthDisplay").innerText = `Health: ${player.health}`;
+    document.getElementById("attackDisplay").innerText = `Attack: ${player.attack}`;
+    document.getElementById("defenseDisplay").innerText = `Defense: ${player.defense}`;
+    document.getElementById("speedDisplay").innerText = `Speed: ${player.speed}`;
+    document.getElementById("skillPointsDisplay").innerText = `Skill Points: ${player.skillPoints}`;
+}
+
+// Function to update stats dynamically
+function updatePlayerStats() {
+    document.getElementById('playerHealthText').innerText = player.health;
+    document.getElementById('playerAttackText').innerText = player.attack;
+    document.getElementById('playerDefenseText').innerText = player.defense;
+    document.getElementById('playerSpeedText').innerText = player.speed;
+  }
+
 // Global variables and starter kit logic
 let equipment = {
     weapon: "Basic Sword",
@@ -5,7 +102,6 @@ let equipment = {
     armor: "None",  // Add armor slot here
     defense: 0 // Add defense stat to track armor's effect
 };
-let playerHP = 100;
 let inventory = {
     "Iron Ore": 5,
     "Wood": 3,
@@ -24,6 +120,15 @@ const monsters = {
 
 
 const craftingRecipes = {
+    "Iron Sword": {
+        materials: {
+            "Iron Ore": 3,
+            "Wood": 2
+        },
+        result: "Iron Sword",
+        attackBoost: 10
+    },
+
     "Leather Armor": {
         materials: {
             "Leather": 3,
@@ -32,6 +137,7 @@ const craftingRecipes = {
         result: "Leather Armor",
         defenseBoost: 5
     },
+
     "Steel Armor": {
         materials: {
             "Steel Ore": 5,
@@ -40,23 +146,16 @@ const craftingRecipes = {
         result: "Steel Armor",
         defenseBoost: 15
     },
-    "Enchanted Armor": {
-        materials: {
-            "Enchanted Crystal": 1,
-            "Steel Armor": 1  // Requires Steel Armor as material
-        },
-        result: "Enchanted Armor",
-        defenseBoost: 30
-    },
     // Add more upgrades here...
 };
 
 function craftItem(itemName) {
+    console.log(`Attempting to craft: ${itemName}`); // Debug line
     if (craftingRecipes[itemName]) {
         const recipe = craftingRecipes[itemName];
         let canCraft = true;
 
-        // Check if the player has enough materials and the previous item
+        // Check if player has enough materials
         for (let material in recipe.materials) {
             if (inventory[material] < recipe.materials[material]) {
                 canCraft = false;
@@ -64,12 +163,6 @@ function craftItem(itemName) {
             }
         }
 
-        // Check if the previous armor exists (e.g., Leather Armor -> Steel Armor)
-        if (itemName === "Steel Armor" && !inventory["Leather Armor"]) {
-            canCraft = false;
-        }
-
-        // If they have enough materials, craft the item
         if (canCraft) {
             // Deduct materials from inventory
             for (let material in recipe.materials) {
@@ -79,29 +172,45 @@ function craftItem(itemName) {
             // Add the crafted item to the inventory
             inventory[itemName] = (inventory[itemName] || 0) + 1;
 
-            // Apply boosts (defense)
-            if (recipe.defenseBoost) {
-                equipment.defense += recipe.defenseBoost;
+            // Apply boosts (attack or defense) and equip the item
+            if (recipe.attackBoost) {
+                equipment.attack += recipe.attackBoost;
             }
 
-            // Upgrade equipment (if the item is armor)
-            if (itemName.includes("Armor")) {
-                equipment.armor = itemName;  // Equip the new armor
+            // Equip the crafted weapon or armor
+            if (itemName.includes("Sword") || itemName.includes("Weapon")) {
+                equipment.weapon = itemName; // Equip the new weapon
+            } else if (itemName.includes("Armor")) {
+                equipment.armor = itemName; // Equip the new armor
             }
 
-            // Update UI and inventory
-            updateInventory();
-            renderEquipmentSlots(); // Update the equipment slots
-
+            // Update the UI
+            updateInventory();  // Update inventory display
+            renderEquipmentSlots();  // Update the equipment slots (weapon + armor)
             alert(`You crafted a ${itemName}!`);
 
-            // Save the game data after crafting
+            // Save the game data
             saveGameData();
         } else {
-            alert("You don't have enough materials or the required previous item to craft this.");
+            alert("You don't have enough materials to craft this.");
         }
     }
 }
+
+function toggleCrafting() {
+    // Hide other sections
+    document.getElementById('inventoryContainer').style.display = 'none';
+    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('lootContainer').style.display = 'none';
+  
+    // Toggle crafting interface
+    const craftingContainer = document.getElementById('craftingContainer');
+    if (craftingContainer.style.display === 'none') {
+      craftingContainer.style.display = 'block';
+    } else {
+      craftingContainer.style.display = 'none';
+    }
+  }
 
 function renderCraftingUI() {
     let craftingDiv = document.getElementById("crafting");
@@ -327,7 +436,6 @@ function updateHealthBars(playerHP, monster, selectedMonster) {
 }
 
 // Function to fight the selected monster
-// Function to fight the selected monster
 function fightMonster() {
     let selectedMonster = document.getElementById("monsterSelect").value;
 
@@ -449,40 +557,30 @@ function startNewGame() {
 
 // Function to save game data to localStorage
 function saveGameData() {
-    localStorage.setItem("playerHP", playerHP);
-    localStorage.setItem("inventory", JSON.stringify(inventory));
+    localStorage.setItem("player", JSON.stringify(player));
     localStorage.setItem("equipment", JSON.stringify(equipment));
+    localStorage.setItem("inventory", JSON.stringify(inventory));
 }
 
-// Function to load game data from localStorage
+// Load player data
 function loadGameData() {
-    // Load player data (HP)
-    let storedHP = localStorage.getItem("playerHP");
-    if (storedHP) {
-        playerHP = parseInt(storedHP);
+    let storedPlayer = localStorage.getItem("player");
+    if (storedPlayer) {
+        player = JSON.parse(storedPlayer);
     }
 
-    // Load inventory
-    let storedInventory = localStorage.getItem("inventory");
-    if (storedInventory) {
-        inventory = JSON.parse(storedInventory);
-    }
-
-    // Load equipment
     let storedEquipment = localStorage.getItem("equipment");
     if (storedEquipment) {
         equipment = JSON.parse(storedEquipment);
     }
 
-    // If armor doesn't exist, set default armor (Leather Armor)
-    if (!equipment.armor) {
-        equipment.armor = "Leather Armor";
+    let storedInventory = localStorage.getItem("inventory");
+    if (storedInventory) {
+        inventory = JSON.parse(storedInventory);
     }
 
-    // Update UI with the loaded data
-    updateInventory();           // Update inventory UI
-    renderEquipmentSlots();      // Update the equipment slots (weapon + armor)
-    updateHealthBars(playerHP);  // Update the player's health bar
+    updateStatsDisplay(); // Update UI with loaded stats
+    updateInventory();    // Update inventory display
 }
 window.onload = () => {
     checkStarterKitSelection(); // Load the starter kit if it's stored

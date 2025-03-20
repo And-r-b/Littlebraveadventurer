@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Little Brave Adventurer</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="app.js" defer></script>
+  <script src="main.js" defer></script>
   <link rel="shortcut icon" href="./images/smallknight.jpg" type="image/x-icon" />
 </head>
 <body>
@@ -48,63 +48,69 @@
     <!-- Toggle Buttons -->
     <button onclick="toggleInventory()" class="toggle-button">Inventory</button>
 
-    <!-- Settings Button -->
+    <button onclick="toggleCrafting()" class="toggle-button">Crafting</button>
+
     <button onclick="toggleSettings()" class="toggle-button">Settings</button>
-    
+
     <!-- Game Layout: Inventory + Fight Container -->
     <div class="game-layout">
       <!-- Inventory Section -->
       <div id="inventoryContainer" style="display: none;">
           <div id="inventory">
               <h2>Inventory</h2>
+              <!-- Inventory items will be dynamically loaded here -->
           </div>
+      </div>
 
-          <div id="craftingInterface">
-            <h2>Crafting</h2>
-            <div class="crafting-item">
-                <h3>Iron Sword</h3>
-                <p>Materials: 3 Iron Ore, 2 Wood</p>
-                <button onclick="craftItem('Iron Sword')">Craft Iron Sword</button>
-            </div>
-            <div class="crafting-item">
-              <h3>Leather Armor</h3>
-              <p>Materials: 2 Leather, 1 Iron Ore</p>
-              <button onclick="craftItem('Leather Armor')">Craft Leather Armor</button>
+      <!-- Crafting Section (Initially hidden) -->
+      <div id="craftingContainer" style="display: none;">
+        <div id="craftingInterface">
+          <h2>Crafting</h2>
+          <div class="crafting-item">
+              <h3>Iron Sword</h3>
+              <p>Materials: 3 Iron Ore, 2 Wood</p>
+              <button onclick="craftItem('Iron Sword')">Craft Iron Sword</button>
+          </div>
+          <div class="crafting-item">
+            <h3>Leather Armor</h3>
+            <p>Materials: 2 Leather, 1 Iron Ore</p>
+            <button onclick="craftItem('Leather Armor')">Craft Leather Armor</button>
           </div>
           <div class="crafting-item">
               <h3>Iron Armor</h3>
               <p>Materials: 5 Iron Ore, 2 Leather</p>
               <button onclick="craftItem('Iron Armor')">Craft Iron Armor</button>
           </div>
-            <div class="crafting-item">
-                <h3>Steel Armor</h3>
-                <p>Materials: 5 Steel Ore, 3 Leather</p>
-                <button onclick="craftItem('Steel Armor')">Craft Steel Armor</button>
-            </div>
-            <!-- Add more crafting items here as needed -->
+          <div class="crafting-item">
+              <h3>Steel Armor</h3>
+              <p>Materials: 5 Steel Ore, 3 Leather</p>
+              <button onclick="craftItem('Steel Armor')">Craft Steel Armor</button>
+          </div>
         </div>
       </div>
 
       <!-- Settings Container (Initially hidden) -->
-    <div id="settingsContainer" style="display: none;">
-      <h2>Settings</h2>
-      <label for="musicToggle">Music:</label>
-      <input type="checkbox" id="musicToggle" checked />
-      <br />
-  
-      <label for="soundToggle">Sound Effects:</label>
-      <input type="checkbox" id="soundToggle" checked />
-      <br />
+      <div id="settingsContainer" style="display: none;">
+        <h2>Settings</h2>
+        <label for="musicToggle">Music:</label>
+        <input type="checkbox" id="musicToggle" checked />
+        <br />
+    
+        <label for="soundToggle">Sound Effects:</label>
+        <input type="checkbox" id="soundToggle" checked />
+        <br />
 
-      <button onclick="startNewGame()">Reset Game</button>
-      <!-- You can add more settings options here as needed -->
-    </div>
+        <button onclick="startNewGame()">Reset Game</button>
+        <!-- You can add more settings options here as needed -->
+      </div>
+
       <!-- Loot Section -->
       <div id="lootContainer" style="display: none;">
         <div id="loot">
             <h2>Loot</h2>
+            <!-- Loot will be dynamically loaded here -->
         </div>
-    </div>
+      </div>
 
       <!-- Fight Container Column -->
       <div class="fight-container">
@@ -126,6 +132,14 @@
               <span id="monsterHealthText">100</span>
             </div>
           </div>
+        </div>
+
+        <!-- Player Stats Section (Under Health Bars) -->
+        <div id="playerStatsContainer">
+          <h3>Player Stats</h3>
+          <p><strong>Attack:</strong> <span id="playerAttack">10</span></p>
+          <p><strong>Defense:</strong> <span id="playerDefense">5</span></p>
+          <p><strong>Speed:</strong> <span id="playerSpeed">3</span></p>
         </div>
 
         <!-- Fight Box for Images (Below the health bars) -->
