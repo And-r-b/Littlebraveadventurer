@@ -1,4 +1,52 @@
 body {
-    background-color: darkslategray;
-    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #095026;
+    color: rgb(255, 255, 255);
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: rgb(0, 0, 0);
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+#inventory {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+}
+
+.inventory-item {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    color: black;
+}
+
+.quantity {
+    color: #007bff;
+}
+
+#starterSelection {
+    margin-top: 50px;
+}
+
+#starterSelection button {
+    width: 200px;
+    height: 50px;
+    margin: 10px;
+    font-size: 18px;
 }

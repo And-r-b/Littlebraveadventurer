@@ -3,11 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Little Brave knight</title>
+    <title>Little Brave Knight</title>
     <link rel="stylesheet" href="style.css">
     <script src="app.js" defer></script>
+    <link rel="shortcut icon" href="./images/smallknight.jpg" type="image/x-icon">
 </head>
 <body>
-    
+    <h1>Little Brave Knight</h1>
+
+    <!-- Starter Kit Selection Screen -->
+    <div id="starterSelection">
+        <h2>Choose Your Starter Kit</h2>
+        <button onclick="selectStarterKit('Knight')">Knight</button>
+        <button onclick="selectStarterKit('Ranger')">Ranger</button>
+        <button onclick="selectStarterKit('Thief')">Thief</button>
+    </div>
+
+    <!-- Game Content -->
+    <div id="gameContent" style="display: none;">
+        <h2>Fight Monsters</h2>
+        <p>Select a monster to fight:</p>
+        <select id="monsterSelect">
+            <option value="Slime">Slime</option>
+            <option value="Wolf">Wolf</option>
+            <option value="Goblin">Goblin</option>
+            <option value="Orc">Orc</option>
+        </select>
+        <button onclick="fightMonster()">Fight Monster</button>
+
+        <p id="message"></p>
+        <p id="playerHP">HP: 100</p>
+
+        <!-- Weapon Slot -->
+        <div id="weaponSlot" ondrop="drop(event, 'weapon')" ondragover="allowDrop(event)">Weapon: None</div>
+
+        <h2>Inventory</h2>
+        <div id="inventory">
+            <!-- Example item that can be dragged -->
+            <div id="basicSword" class="inventory-item" draggable="true" ondragstart="drag(event)">
+                Basic Sword x1
+            </div>
+        </div>
+    </div>
 </body>
 </html>
