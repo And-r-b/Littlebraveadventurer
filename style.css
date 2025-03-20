@@ -16,30 +16,6 @@ button {
     margin-top: 10px;
 }
 
-#inventory {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    padding: 20px;
-    max-width: 600px;
-    margin: auto;
-}
-
-.inventory-item {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    color: black;
-}
-
-.quantity {
-    color: #007bff;
-}
-
 #starterSelection {
     margin-top: 50px;
 }
@@ -49,4 +25,127 @@ button {
     height: 50px;
     margin: 10px;
     font-size: 18px;
+}
+
+#playerHP {
+    text-align: left;
+}
+
+#monsterHP {
+    text-align: left;
+}
+
+
+/* Health Bars outside the bottom box (moved above) */
+.health-bars-outside {
+    margin-top: -20px; /* Moves the health bars slightly upwards to fit outside */
+    width: 50%;
+    display: flex;
+    justify-content: space-between; /* Align health bars to the left and right */
+    margin-left: 440px; /* This adjusts the left margin */
+}
+
+/* Health bar container (each health bar) */
+.health-bar-container {
+    width: 30%; /* Adjust width to ensure it fits neatly */
+    display: flex;
+    flex-direction: column; /* Stack the text above the health bar */
+    align-items: center; /* Center the content */
+}
+
+/* Health Bar */
+.health-bar {
+    width: 100%; /* Takes up the full width of its container */
+    height: 20px; /* Smaller height for the health bars */
+    background-color: #ccc; /* Light grey background */
+    border-radius: 15px;
+    position: relative;
+    margin-top: 5px; /* Add a small margin between the text and the health bar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
+}
+
+/* Text above each health bar */
+.health-bar-container p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+}
+
+
+.health-fill {
+    height: 100%;
+    width: 100%; /* Fill the entire width */
+    background-color: green;
+    border-radius: 15px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+/* Box at the bottom for additional content */
+.bottom-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 20px;
+    margin-top: 50px;
+    border-radius: 10px;
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+    height: 50vh;
+}
+
+/* Move the inventory to the left side of the box */
+#inventory {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align inventory items to the left */
+    gap: 10px;
+    margin-left: 20px; /* Adjust space from the left side */
+    width: 25%; /* Adjust as necessary */
+}
+
+/* Inventory item styling */
+.inventory-item {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    color: black;
+    border: 3px solid black;
+}
+
+/* Additional content section (buttons, etc.) */
+.additional-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 25%;
+}
+
+.fight-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.fight-button:hover {
+    background-color: #218838;
 }
