@@ -1,78 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Little Brave Adventurer</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="app.js" defer></script>
-    <link rel="shortcut icon" href="./images/smallknight.jpg" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Little Brave Adventurer</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+  <link rel="shortcut icon" href="./images/smallknight.jpg" type="image/x-icon" />
 </head>
 <body>
-    <h1>Little Brave Adventurer</h1>
+  <h1>Little Brave Adventurer</h1>
 
-    <!-- Starter Kit Selection Screen -->
-    <div id="starterSelection">
-        <h2>Choose Your Class</h2>
-        <button onclick="selectStarterKit('Knight')">Knight</button>
+  <!-- Starter Kit Selection Screen -->
+  <div id="starterSelection">
+    <h2>Choose Your Class</h2>
+    <button onclick="selectStarterKit('Knight')">Knight</button>
+  </div>
+
+  <!-- Game Content -->
+  <div id="gameContent" style="display: none;">
+    <h2>Fight Monsters</h2>
+    <p>Select a monster to fight:</p>
+    <select id="monsterSelect">
+      <option value="Slime">Slime</option>
+      <option value="Wolf">Wolf</option>
+      <option value="Goblin">Goblin</option>
+      <option value="Orc">Orc</option>
+    </select>
+
+    <!-- Main Fight Button (Above the fight container) -->
+    <button onclick="fightMonster()" class="fight-button">Fight Monster</button>
+    
+    <p>Class: Knight</p>
+
+    <!-- Weapon Slot -->
+    <div id="weaponSlot" ondrop="drop(event, 'weapon')" ondragover="allowDrop(event)">
+      Weapon: None
     </div>
 
-    <!-- Game Content -->
-    <div id="gameContent" style="display: none;">
-        <h2>Fight Monsters</h2>
-        <p>Select a monster to fight:</p>
-        <select id="monsterSelect">
-            <option value="Slime">Slime</option>
-            <option value="Wolf">Wolf</option>
-            <option value="Goblin">Goblin</option>
-            <option value="Orc">Orc</option>
-        </select>
+    <p id="message"></p>
 
-        <!-- Move the button outside of the bottom box -->
-        <button onclick="fightMonster()" class="fight-button">Fight Monster</button>
-
-        <p>Class: Knight</p>
-
-        <!-- Weapon Slot -->
-        <div id="weaponSlot" ondrop="drop(event, 'weapon')" ondragover="allowDrop(event)">Weapon: None</div>
-        
-        <p id="message"></p>
-        
-        <!-- Health Bars outside the bottom box (moved above) -->
-        <div class="health-bars-outside">
-            <!-- Player Health Bar -->
-            <div class="health-bar-container">
-                <p id="playerHP">Adventurer's HP</p>
-                <div id="playerHealthBar" class="health-bar">
-                    <div id="playerHealth" class="health-fill"></div>
-                    <span id="playerHealthText">100</span>
-                </div>
-            </div>
-
-            <!-- Monster Health Bar -->
-            <div class="health-bar-container">
-                <p id="monsterHP">Monster's HP</p>
-                <div id="monsterHealthBar" class="health-bar">
-                    <div id="monsterHealth" class="health-fill"></div>
-                    <span id="monsterHealthText">100</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Box with Health Bars -->
-        <div class="bottom-box">
-            <!-- Add any additional content (buttons, etc.) -->
-            <div class="additional-content">
-                
-            </div>
-        </div>
-
+    <!-- Game Layout: Inventory (Left) + Fight Container (Right) -->
+    <div class="game-layout">
+      <!-- Inventory Column -->
+      <div id="inventory">
         <h2>Inventory</h2>
-        <div id="inventory">
-            <div id="basicSword" class="inventory-item" draggable="true" ondragstart="drag(event)">
-                Basic Sword x1
-            </div>
+        <!-- Example inventory items -->
+        <div class="inventory-item" draggable="true" ondragstart="drag(event)">
+          Basic Sword x1
         </div>
+        <!-- More items can go here -->
+      </div>
+
+      <!-- Fight Container Column -->
+      <div class="fight-container">
+        <!-- Health Bars at the Top, within fight container borders -->
+        <div class="health-bars">
+          <!-- Player Health Bar (left side) -->
+          <div class="health-bar-container player-side">
+            <p id="playerHPLabel">Adventurer's HP</p>
+            <div id="playerHealthBar" class="health-bar">
+              <div id="playerHealth" class="health-fill"></div>
+              <span id="playerHealthText">100</span>
+            </div>
+          </div>
+          <!-- Monster Health Bar (right side) -->
+          <div class="health-bar-container monster-side">
+            <p id="monsterHPLabel">Monster's HP</p>
+            <div id="monsterHealthBar" class="health-bar">
+              <div id="monsterHealth" class="health-fill"></div>
+              <span id="monsterHealthText">100</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fight Box for Images (Below the health bars) -->
+        <div class="fight-box">
+          <div class="fight-image player-image">
+            <img src="/images/smallknight.jpg" alt="Adventurer" />
+          </div>
+          <div class="fight-image monster-image">
+            <img src="/images/slime.png" alt="Monster" />
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </body>
 </html>

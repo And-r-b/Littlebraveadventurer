@@ -1,138 +1,27 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
     text-align: center;
     background-color: #095026;
-    color: rgb(255, 255, 255);
-}
-
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: rgb(0, 0, 0);
-    border: none;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-#starterSelection {
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  /* Starter Selection */
+  #starterSelection {
     margin-top: 50px;
-}
-
-#starterSelection button {
+  }
+  
+  #starterSelection button {
     width: 200px;
     height: 50px;
     margin: 10px;
     font-size: 18px;
-}
-
-#playerHP {
-    text-align: left;
-}
-
-#monsterHP {
-    text-align: left;
-}
-
-
-/* Health Bars outside the bottom box (moved above) */
-.health-bars-outside {
-    margin-top: -20px; /* Moves the health bars slightly upwards to fit outside */
-    width: 50%;
-    display: flex;
-    justify-content: space-between; /* Align health bars to the left and right */
-    margin-left: 440px; /* This adjusts the left margin */
-}
-
-/* Health bar container (each health bar) */
-.health-bar-container {
-    width: 30%; /* Adjust width to ensure it fits neatly */
-    display: flex;
-    flex-direction: column; /* Stack the text above the health bar */
-    align-items: center; /* Center the content */
-}
-
-/* Health Bar */
-.health-bar {
-    width: 100%; /* Takes up the full width of its container */
-    height: 20px; /* Smaller height for the health bars */
-    background-color: #ccc; /* Light grey background */
-    border-radius: 15px;
-    position: relative;
-    margin-top: 5px; /* Add a small margin between the text and the health bar */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Add a subtle shadow for depth */
-}
-
-/* Text above each health bar */
-.health-bar-container p {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: bold;
-    color: white;
-}
-
-
-.health-fill {
-    height: 100%;
-    width: 100%; /* Fill the entire width */
-    background-color: green;
-    border-radius: 15px;
-    transition: width 0.5s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-}
-
-/* Box at the bottom for additional content */
-.bottom-box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #333;
-    padding: 20px;
-    margin-top: 50px;
-    border-radius: 10px;
-    width: 60%;
-    margin-left: auto;
-    margin-right: auto;
-    height: 50vh;
-}
-
-/* Move the inventory to the left side of the box */
-#inventory {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Align inventory items to the left */
-    gap: 10px;
-    margin-left: 20px; /* Adjust space from the left side */
-    width: 25%; /* Adjust as necessary */
-}
-
-/* Inventory item styling */
-.inventory-item {
-    background: white;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    color: black;
-    border: 3px solid black;
-}
-
-/* Additional content section (buttons, etc.) */
-.additional-content {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 25%;
-}
-
-.fight-button {
+  }
+  
+  /* Fight Button (above fight container) */
+  .fight-button {
     background-color: #28a745;
     color: white;
     border: none;
@@ -144,8 +33,155 @@ button {
     display: block;
     margin-left: auto;
     margin-right: auto;
+  }
+  
+  .fight-button:hover {
+    background-color: #218838;
+  }
+  
+  /* Weapon Slot */
+  #weaponSlot {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  
+  
+  /* Message */
+  #message {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  #inventory h2 {
+    color: white;  /* Makes text visible */
+    font-size: 1.5rem; /* Adjust text size */
+    text-align: left; /* Align text to the left */
+    margin-bottom: 10px; /* Adds spacing below the title */
 }
 
-.fight-button:hover {
-    background-color: #218838;
-}
+  /* Game Layout: Inventory (Left) + Fight Container (Right) */
+  .game-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 80%;
+    margin: 20px auto;
+  }
+  
+  /* Inventory Column */
+  #inventory {
+    width: 25%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  /* Inventory Item */
+  .inventory-item {
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    color: black;
+    border: 3px solid black;
+  }
+  
+  /* Fight Container Column */
+  .fight-container {
+    width: 70%;
+    background-color: #333;
+    border-radius: 10px;
+    position: relative;
+    margin-right: 200px;
+  }
+  
+  /* Health Bars Container (within Fight Container) */
+  .health-bars {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+  }
+  
+  /* Health Bar Container for each */
+  .health-bar-container {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Align Player HP bar to the left */
+  .player-side {
+    align-items: flex-start;
+  }
+  
+  /* Align Monster HP bar to the right */
+  .monster-side {
+    align-items: flex-end;
+  }
+  
+  /* Health Bar */
+  .health-bar {
+    width: 200px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 15px;
+    position: relative;
+    margin-top: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  /* Health Fill (Inner Bar) */
+  .health-fill {
+    height: 100%;
+    width: 100%;
+    background-color: green;
+    border-radius: 15px;
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* Health Bar Text (inside the bar) */
+  .health-bar span {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    width: 100%;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  /* Fight Box for Images */
+  .fight-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 60px; /* Space below health bars */
+  }
+  
+  .fight-image {
+    width: 45%;
+  }
+  
+  .fight-image img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
