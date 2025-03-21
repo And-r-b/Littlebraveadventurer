@@ -2,7 +2,7 @@
 body {
     font-family: Arial, sans-serif;
     text-align: center;
-    background-color: #095026;
+    background-color: #006b17d8;
     color: #fff;
     margin: 0;
     padding: 20px;
@@ -19,6 +19,21 @@ body {
     margin: 10px;
     font-size: 18px;
   }
+
+  /* Inventory, Crafting and Settings button */
+
+.toggle-button {
+  background-color: #008cffa9;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  margin-left: auto;
+  margin-right: auto;
+}
   
   /* Fight Button (above fight container) */
   .fight-button {
@@ -208,6 +223,18 @@ body {
   margin: 20px auto;
 }
 
+#settingsContainer {
+  background-color: rgb(15, 14, 14);
+  padding: 20px;
+  border-radius: 10px; /* Smooth rounded corners */
+  border: 2px solid rgba(255, 255, 255, 0.678); /* Subtle border */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Soft shadow */
+  color: white; /* Ensure text is readable */
+  max-width: 400px; /* Prevent it from stretching too much */
+  margin: 20px auto; /* Centering */
+  font-family: Arial, sans-serif; /* Clean font */
+}
+
 /* Setting Item styling */
 .setting-item {
   margin-bottom: 10px;
@@ -235,6 +262,7 @@ body {
 .setting-item button:hover {
   background-color: #45a049; /* Button hover color */
 }
+
 
 /* Ensure the checkbox inputs also match the theme */
 .setting-item input[type="checkbox"] {
