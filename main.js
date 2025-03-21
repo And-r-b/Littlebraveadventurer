@@ -1,18 +1,35 @@
-// Global variables and starter kit logic
+// Global variables and starter kit
 let equipment = {
     weapon: "Basic Sword",
     attack: 5,
     armor: "None",  // Add armor slot here
     defense: 0 // Add defense stat to track armor's effect
 };
+
 let playerHP = 100;
-let inventory = {
-    "Iron Ore": 5,
-    "Wood": 3,
-    "Leather": 2,
+
+
+const gatherableResources = [
+    { name: "Iron Ore", quantity: 1 },
+    { name: "Wood", quantity: 1 },
+    { name: "Leather", quantity: 1 },
+    { name: "Steel Ore", quantity: 1 }
+];
+
+let inventory = JSON.parse(localStorage.getItem("inventory")) || {
+    "Iron Ore": 0,
+    "Wood": 0,
+    "Leather": 0,
     "Steel Ore": 0
-    // Other materials
 };
+
+let monster = {
+    hp: 100 // Default monster health
+};
+
+// Example of selecting a monster
+let selectedMonster = 0; 
+
 let selectedStarter = ""; // Store the selected starter kit
 
 const monsters = {
@@ -22,6 +39,13 @@ const monsters = {
     "Orc": { hp: 60, attack: [8, 15], drops: ["Orc Tooth", "Iron Shard"] }
 };
 
+function updatePlayerStats() {
+    // Update the attack and defense stats dynamically in the UI
+    document.getElementById("playerAttack").innerText = equipment.attack;
+    document.getElementById("playerDefense").innerText = equipment.defense;
+}
+//Calling the update when player updates attack and defense
+updatePlayerStats();
 
 const craftingRecipes = {
     "Iron Sword": {
@@ -42,13 +66,22 @@ const craftingRecipes = {
         defenseBoost: 5
     },
 
+    "Iron Armor": {
+        materials: {
+            "Iron Ore": 10,
+            "Leather Armor": 1 // Requires Leather Armor as material
+        },
+        result: "Iron Armor",
+        defenseBoost: 7
+    },
+
     "Steel Armor": {
         materials: {
             "Steel Ore": 5,
-            "Leather Armor": 1  // Requires Leather Armor as material
+            "Iron Armor": 1  // Requires Iron Armor as material
         },
         result: "Steel Armor",
-        defenseBoost: 15
+        defenseBoost: 13
     },
     // Add more upgrades here...
 };
@@ -74,24 +107,35 @@ function craftItem(itemName) {
             }
 
             // Add the crafted item to the inventory
-            inventory[itemName] = (inventory[itemName] || 0) + 1;
+            inventory[recipe.result] = (inventory[recipe.result] || 0) + 1;
 
-            // Apply boosts (attack or defense) and equip the item
-            if (recipe.attackBoost) {
-                equipment.attack += recipe.attackBoost;
+            // Equip the crafted item and replace the existing weapon/armor
+
+            // If the item is a weapon (attack-related), update attack
+            if (itemName.includes("Sword") || itemName.includes("Weapon")) {
+                // Equip the new weapon, replacing any existing weapon
+                equipment.weapon = recipe.result;
+
+                // Apply the new attack boost (replace, not add)
+                equipment.attack = recipe.attackBoost;
             }
 
-            // Equip the crafted weapon or armor
-            if (itemName.includes("Sword") || itemName.includes("Weapon")) {
-                equipment.weapon = itemName; // Equip the new weapon
-            } else if (itemName.includes("Armor")) {
-                equipment.armor = itemName; // Equip the new armor
+            // If the item is armor (defense-related), update defense
+            if (itemName.includes("Armor")) {
+                // Equip the new armor, replacing any existing armor
+                equipment.armor = recipe.result;
+
+                // Apply the new defense boost (replace, not add)
+                equipment.defense = recipe.defenseBoost;
             }
 
             // Update the UI
             updateInventory();  // Update inventory display
             renderEquipmentSlots();  // Update the equipment slots (weapon + armor)
             alert(`You crafted a ${itemName}!`);
+
+            // Update player stats display
+            updatePlayerStats(); // Ensure stats like attack and defense are updated
 
             // Save the game data
             saveGameData();
@@ -100,6 +144,8 @@ function craftItem(itemName) {
         }
     }
 }
+
+// Toggling crafting menu
 
 function toggleCrafting() {
     // Hide other sections
@@ -152,17 +198,136 @@ function renderCraftingUI() {
     }
 }
 
+let gatherCooldown = 600; // 10 minutes in seconds
+let gatherButton = document.getElementById("gatherButton");
+let messageElement = document.getElementById("message");
+
+// Function to start the cooldown and delay item rewards
+function startGatherCooldown() {
+    gatherButton.disabled = true;
+    let remainingTime = gatherCooldown;
+
+    // Update message to indicate waiting period
+    messageElement.innerText = "Gathering in progress...";
+    messageElement.style.display = "block";
+
+    let countdown = setInterval(() => {
+        if (remainingTime <= 0) {
+            clearInterval(countdown);
+            gatherButton.disabled = false;
+            gatherButton.innerText = "Gather Resource";
+            giveGatherReward(); // Give reward after 10 minutes
+        } else {
+            let minutes = Math.floor(remainingTime / 60);
+            let seconds = remainingTime % 60;
+            gatherButton.innerText = `Gathering... (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
+            remainingTime--;
+        }
+    }, 1000);
+}
+
+// Function to handle the gathering process (starts cooldown but delays rewards)
+function gatherResource() {
+    if (gatherButton.disabled) return; // Prevent multiple clicks
+
+    startGatherCooldown(); // Start countdown
+}
+
+function giveGatherReward() {
+    const availableResources = ["Iron Ore", "Wood", "Leather", "Steel Ore"];
+    let gatheredItems = {};
+    let totalItems = 10; // Maximum number of items the player can receive
+
+    // Distribute items randomly
+    for (let i = 0; i < totalItems; i++) {
+        let randomResource = availableResources[Math.floor(Math.random() * availableResources.length)];
+        let quantity = Math.floor(Math.random() * 1) + 1; // Ensures 1 or 2 (never 0 or negative)
+
+        if (gatheredItems[randomResource]) {
+            gatheredItems[randomResource] += quantity;
+        } else {
+            gatheredItems[randomResource] = quantity;
+        }
+    }
+
+    // Add gathered items to inventory (only if greater than 0)
+    for (let resource in gatheredItems) {
+        if (gatheredItems[resource] > 0) {
+            inventory[resource] = (inventory[resource] || 0) + gatheredItems[resource];
+        }
+    }
+
+    // Save inventory to localStorage
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+
+    // Update inventory display
+    updateInventoryDisplay();
+
+    // Create message only for items that are > 0
+    let gatheredMessage = Object.entries(gatheredItems)
+        .filter(([_, quantity]) => quantity > 0) // Filters out 0 values
+        .map(([resource, quantity]) => `${quantity} ${resource}`)
+        .join(", ");
+
+    // Only display a message if something was gathered
+    if (gatheredMessage) {
+        messageElement.innerText = `You gathered: ${gatheredMessage}!`;
+        messageElement.style.display = "block";
+    }
+}
+
+
+
+// Function to update inventory display
+function updateInventoryDisplay() {
+    const inventoryContent = document.getElementById('inventory');
+    
+    // Clear the inventory list
+    inventoryContent.innerHTML = '<h2>Inventory</h2>';
+
+    // Display items
+    for (let resource in inventory) {
+        const resourceDiv = document.createElement('div');
+        resourceDiv.classList.add('inventory-item');
+        resourceDiv.innerHTML = `${resource}: ${inventory[resource]}`;
+        inventoryContent.appendChild(resourceDiv);
+    }
+}
+
+
+// Initial inventory display update
+updateInventoryDisplay();
+
+
 function cleanupInventory() {
+    console.log("Cleaning up inventory...");
+
     // Loop through all items in the inventory
     for (let item in inventory) {
         if (inventory[item] === 0) {
+            console.log(`Item ${item} has quantity 0. Deleting...`);
             // If the item has 0 quantity, delete it from the inventory
             delete inventory[item];
+
+            // Optional: Update the UI to remove this item visually
+            let itemElement = document.getElementById(item); // Assuming item elements have the same ID as item names
+            if (itemElement) {
+                itemElement.style.display = 'none'; // Hide the item from the UI
+            }
         }
     }
+
     // After cleanup, save the updated inventory to localStorage
     localStorage.setItem("inventory", JSON.stringify(inventory));
+
+    // Log the cleaned-up inventory to verify
+    console.log("Updated inventory:", inventory);
 }
+
+// Example: Call loadGameData on page load or when the player starts the game
+window.onload = function() {
+    loadGameData(); // Call this to load the game and clean up the inventory
+};
 
 // Function to select starter kit
 function selectStarterKit(starter) {
@@ -224,6 +389,15 @@ function updateInventory(newLoot = "") {
     let inventoryDiv = document.getElementById("inventory");
     inventoryDiv.innerHTML = "<h2>Inventory</h2>"; // Ensure title stays
 
+    // If a new item is gathered, show a message
+    if (newLoot) {
+        let newLootDiv = document.createElement("div");
+        newLootDiv.classList.add("inventory-item");
+        newLootDiv.innerHTML = `<span>You gathered: ${newLoot}</span>`;
+        inventoryDiv.appendChild(newLootDiv);
+    }
+
+    // Loop through each item in the inventory and display it
     for (let item in inventory) {
         let itemDiv = document.createElement("div");
         itemDiv.classList.add("inventory-item");
@@ -246,6 +420,68 @@ function toggleInventory() {
         body.classList.remove("inventory-open"); // Remove class to stop blur effect
     }
 }
+
+// Toggle Skill button
+
+function toggleSkills() {
+    // Hide other menus
+    document.getElementById('inventoryContainer').style.display = 'none';
+    document.getElementById('craftingContainer').style.display = 'none';
+    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('lootContainer').style.display = 'none';
+
+    let skillsContainer = document.getElementById('skillsContainer');
+    
+    // Toggle visibility
+    if (skillsContainer.style.display === 'none') {
+        skillsContainer.style.display = 'block';
+    } else {
+        skillsContainer.style.display = 'none';
+    }
+}
+
+// Skill Pray - Healing 50 HP - Cooldown of 5 minutes
+
+let prayCooldownActive = false;
+let prayCooldownTime = 300; // 5 minutes in seconds
+let initialPrayCooldownTime = prayCooldownTime; // Store the original cooldown time
+
+function usePray() {
+    if (prayCooldownActive) return; // Prevent multiple activations
+
+    prayCooldownActive = true;
+    document.getElementById('prayButton').disabled = true; // Disable the button
+    document.getElementById('prayCooldown').style.display = 'inline'; // Show the cooldown message
+
+    // Start healing
+    playerHP = Math.min(playerHP + 50, 100); // Heal but not over max HP
+    updateHealthBars(playerHP); // Update health bars
+
+    // Update the Pray button text to indicate it's in use
+    let prayButton = document.getElementById('prayButton');
+    prayButton.textContent = 'Praying...'; // Set text while praying
+
+    // Start the cooldown and update the timer every second
+    let interval = setInterval(() => {
+        console.log('Interval triggered'); // Debug log to check if the interval is working
+        if (prayCooldownTime > 0) {
+            prayCooldownTime--; // Decrease the cooldown time by 1 second
+            document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`; // Update the timer text
+        } else {
+            clearInterval(interval); // Stop the timer when it's done
+            prayCooldownActive = false; // Reset cooldown status
+            prayButton.disabled = false; // Enable the button
+            prayButton.textContent = 'Pray'; // Reset the button text to 'Pray'
+            document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
+
+            // Reset the cooldown time for the next use
+            prayCooldownTime = initialPrayCooldownTime;
+        }
+    }, 1000); // Update every second
+}
+
+
+// Toggle Settings Buttons
 
 function toggleSettings() {
     const settingsContainer = document.getElementById("settingsContainer");
@@ -273,6 +509,8 @@ document.getElementById("soundToggle").addEventListener("change", function() {
     localStorage.setItem("soundEnabled", this.checked);
 });
 
+// Automatic equip new weapons and armor
+
 function drop(event, slot) {
     event.preventDefault(); // Prevent the default action
     let data = event.dataTransfer.getData("text");
@@ -297,6 +535,9 @@ function drop(event, slot) {
         }
     }
 }
+
+// Update HealthBars Tick
+
 function updateHealthBars(playerHP, monster, selectedMonster) {
     console.log("Updating health bars...");
 
@@ -305,6 +546,12 @@ function updateHealthBars(playerHP, monster, selectedMonster) {
     let playerHealthText = document.getElementById("playerHealthText");
 
     if (playerHealthBar && playerHealthText) {
+        // Ensure playerHP is a valid number
+        if (typeof playerHP !== 'number' || playerHP < 0) {
+            console.error("Invalid playerHP value:", playerHP);
+            return; // Exit if playerHP is invalid
+        }
+
         let playerHealthPercentage = (playerHP / 100) * 100; // Percentage of player's health
         playerHealthBar.style.width = playerHealthPercentage + "%"; // Update width of the bar
         playerHealthText.innerText = playerHP; // Update health number inside the bar
@@ -319,11 +566,16 @@ function updateHealthBars(playerHP, monster, selectedMonster) {
         }
     }
 
-    // Monster Health Bar
+    // Monster Health Bar (Ensure monster and selectedMonster are valid)
     let monsterHealthBar = document.getElementById("monsterHealth");
     let monsterHealthText = document.getElementById("monsterHealthText");
 
     if (monsterHealthBar && monsterHealthText) {
+        if (!monster || typeof monster.hp !== 'number') {
+            console.error("Invalid monster data:", monster);
+            return; // Exit if monster data is invalid
+        }
+
         let monsterHealthPercentage = (monster.hp / monsters[selectedMonster].hp) * 100; // Percentage of monster's health
         monsterHealthBar.style.width = monsterHealthPercentage + "%"; // Update width of the bar
         monsterHealthText.innerText = monster.hp; // Update health number inside the bar
@@ -339,7 +591,10 @@ function updateHealthBars(playerHP, monster, selectedMonster) {
     }
 }
 
-// Function to fight the selected monster
+
+
+// Fighting Function
+
 function fightMonster() {
     let selectedMonster = document.getElementById("monsterSelect").value;
 
@@ -417,7 +672,8 @@ function fightMonster() {
     document.querySelector("button[onclick='fightMonster()']").style.display = "none";
 }
 
-// Function to reset the game and refresh the page to start over
+// Reset button to start new game - Pop Alert
+
 function startNewGame() {
     // Clear all saved data from localStorage
     localStorage.clear();
@@ -425,9 +681,9 @@ function startNewGame() {
     // Reset player stats to default values
     playerHP = 100;
     inventory = {
-        "Iron Ore": 5,
-        "Wood": 3,
-        "Leather": 2,
+        "Iron Ore": 0,
+        "Wood": 0,
+        "Leather": 0,
         "Steel Ore": 0
     };
     equipment = {
@@ -466,7 +722,9 @@ function saveGameData() {
     localStorage.setItem("equipment", JSON.stringify(equipment));
 }
 
-// Function to load game data from localStorage
+
+// Loading your Local Storage save
+
 function loadGameData() {
     // Load player data (HP)
     let storedHP = localStorage.getItem("playerHP");
@@ -491,11 +749,17 @@ function loadGameData() {
         equipment.armor = "Leather Armor";
     }
 
+    // Cleans up inventory to remove items that is 0
+    cleanupInventory();
+
     // Update UI with the loaded data
     updateInventory();           // Update inventory UI
     renderEquipmentSlots();      // Update the equipment slots (weapon + armor)
     updateHealthBars(playerHP);  // Update the player's health bar
 }
+
+// Checking onload
+
 window.onload = () => {
     checkStarterKitSelection(); // Load the starter kit if it's stored
     loadGameData(); // Load saved game data from localStorage

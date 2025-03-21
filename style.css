@@ -116,6 +116,7 @@ body {
   width: 300px;
   height: auto;
   color: white; /* Ensure text is visible */
+  margin-right: 20px;
 }
   
   /* Inventory Item */
@@ -139,6 +140,7 @@ body {
   border-radius: 10px; /* Rounded edges */
   width: 300px;
   color: white; /* Ensure text is visible */
+  margin-right: 20px;
 }
 
 /* Crafting Section Styles */
@@ -231,7 +233,7 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Soft shadow */
   color: white; /* Ensure text is readable */
   max-width: 400px; /* Prevent it from stretching too much */
-  margin: 20px auto; /* Centering */
+  margin-left: 100px;
   font-family: Arial, sans-serif; /* Clean font */
 }
 
@@ -269,10 +271,113 @@ body {
   width: 20px;
   height: 20px;
 }
+
+#gatheringOptions {
+  background-color: black; /* Same blue as toggle buttons */
+  color: white;
+  border: 2px solid white;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  margin-right: 20px;
+  display: inline-block;
+}
+
+
+/* Gathered Resources Buttons */
+.gather-option {
+  background-color: #008cffa9; /* Same blue as toggle buttons */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  margin: 10px;
+  transition: background-color 0.3s ease;
+  display: inline-block;
+}
+
+.gather-option:hover {
+  background-color: #007acc; /* Darker blue on hover */
+}
+
+.gather-option:active {
+  background-color: #0066b3; /* Even darker blue when pressed */
+}
+
+#gatherButton {
+  background-color: #008cffa9;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1.2rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#gatherButton:hover {
+  background-color: #007acc; /* Darker blue on hover */
+}
+
+#gatherButton:active {
+  background-color: #0066b3; /* Even darker blue when pressed */
+}
+
+#gatherButton:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Skills Container (Similar to Crafting) */
+#skillsContainer {
+  background-color: rgba(0, 0, 0, 0.8); /* Dark background like crafting */
+  border: 2px solid white; /* White border for contrast */
+  padding: 10px;
+  border-radius: 10px; /* Rounded edges */
+  width: 300px;
+  color: white; /* Ensure text is visible */
+  right: 0; /* Align to the right inside .game-layout */
+  top: 0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Soft shadow */
+  margin-right: 20px;
+}
+
+/* Pray Button inside Skills Container */
+#prayButton {
+  background-color: #ffc107; /* Gold background to make it stand out */
+  color: white; /* White text */
+  border: none;
+  padding: 12px 20px; /* Adjust padding for better button size */
+  border-radius: 10px; /* Rounded corners for a smoother look */
+  font-size: 1.1rem; /* Slightly larger text */
+  font-weight: bold; /* Make the text bolder */
+  cursor: pointer; /* Pointer cursor to indicate it's clickable */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+  width: 100%; /* Make the button span the width of the container */
+  margin-top: 15px; /* Add some space above the button */
+}
+
+/* Hover Effect */
+#prayButton:hover {
+  background-color: #e0a800; /* Slightly darker gold on hover */
+  transform: scale(1.05); /* Slightly enlarge the button on hover */
+}
+
+/* Disabled State */
+#prayButton:disabled {
+  background-color: #6c757d; /* Gray background for disabled state */
+  cursor: not-allowed; /* Change cursor to not-allowed */
+}
+
   
   /* Fight Container Column */
   .fight-container {
-    width: calc(100% - 270px); /* Default width, accounts for inventory */
+    width: calc(100% - 320px); /* Adjust width based on the Skills container width */
     background-color: #333;
     border-radius: 10px;
     transition: width 0.5s ease-in-out;

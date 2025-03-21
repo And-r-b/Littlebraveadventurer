@@ -48,6 +48,12 @@
     <!-- Toggle Buttons -->
     <button onclick="toggleInventory()" class="toggle-button">Inventory</button>
 
+    <!-- Skills Button -->
+    <button onclick="toggleSkills()" class="toggle-button">Skills</button>
+
+    <!-- Gathering Button -->
+    <button id="gatherButton" onclick="gatherResource()">Gather Resource</button>
+
     <!-- Crafting Button -->
     <button onclick="toggleCrafting()" class="toggle-button">Crafting</button>
 
@@ -69,7 +75,7 @@
           <h2>Crafting</h2>
           <div class="crafting-item">
               <h3>Iron Sword</h3>
-              <p>Materials: 3 Iron Ore, 2 Wood</p>
+              <p>Materials: 3, 2 Wood</p>
               <button onclick="craftItem('Iron Sword')">Craft Iron Sword</button>
           </div>
           <div class="crafting-item">
@@ -105,6 +111,13 @@
         <!-- You can add more settings options here as needed -->
       </div>
 
+      
+      <div id="skillsContainer" style="display: none;">
+        <h2>Skills</h2>
+        <button id="prayButton" onclick="usePray()" class="skill-button">Pray</button>
+        <p id="prayCooldown" style="color: white; display: none ;">Pray is on cooldown</p>
+      </div>
+
       <!-- Loot Section -->
       <div id="lootContainer" style="display: none;">
         <div id="loot">
@@ -118,7 +131,7 @@
         <div class="health-bars">
           <!-- Player Health Bar (left side) -->
           <div class="health-bar-container player-side">
-            <p id="playerHPLabel">Adventurer's HP</p>
+            <p id="playerHPLabel">Adventurer's HP | Attack: <span id="playerAttack">10</span> | Defense: <span id="playerDefense">5</span></p>
             <div id="playerHealthBar" class="health-bar">
               <div id="playerHealth" class="health-fill"></div>
               <span id="playerHealthText">100</span>
