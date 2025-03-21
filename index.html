@@ -48,8 +48,10 @@
     <!-- Toggle Buttons -->
     <button onclick="toggleInventory()" class="toggle-button">Inventory</button>
 
+    <!-- Crafting Button -->
     <button onclick="toggleCrafting()" class="toggle-button">Crafting</button>
 
+    <!-- Settings Button -->
     <button onclick="toggleSettings()" class="toggle-button">Settings</button>
 
     <!-- Game Layout: Inventory + Fight Container -->
@@ -58,7 +60,6 @@
       <div id="inventoryContainer" style="display: none;">
           <div id="inventory">
               <h2>Inventory</h2>
-              <!-- Inventory items will be dynamically loaded here -->
           </div>
       </div>
 
@@ -108,7 +109,6 @@
       <div id="lootContainer" style="display: none;">
         <div id="loot">
             <h2>Loot</h2>
-            <!-- Loot will be dynamically loaded here -->
         </div>
       </div>
 
@@ -132,14 +132,6 @@
               <span id="monsterHealthText">100</span>
             </div>
           </div>
-        </div>
-
-        <!-- Player Stats Section (Under Health Bars) -->
-        <div id="playerStatsContainer">
-          <h3>Player Stats</h3>
-          <p><strong>Attack:</strong> <span id="playerAttack">10</span></p>
-          <p><strong>Defense:</strong> <span id="playerDefense">5</span></p>
-          <p><strong>Speed:</strong> <span id="playerSpeed">3</span></p>
         </div>
 
         <!-- Fight Box for Images (Below the health bars) -->

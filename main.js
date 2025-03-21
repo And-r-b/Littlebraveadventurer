@@ -1,100 +1,3 @@
-// PLayer 
-let player = {
-    level: 1,
-    xp: 0,
-    maxXP: 100,  // XP needed to level up
-    health: 100,
-    attack: 10,
-    defense: 5,
-    speed: 5,
-    skillPoints: 0,  // Points awarded on level-up
-  };
-
-// XP
-
-// Function to handle gaining XP
-function gainXP(amount) {
-    player.xp += amount;
-    checkLevelUp();  // Check if the player has enough XP to level up
-    updateXPDisplay(); // Update the UI for XP
-  }
-  
-  // Function to check if the player has leveled up
-  function checkLevelUp() {
-    if (player.xp >= player.maxXP) {
-      levelUp();
-    }
-  }
-  
-  // Function to handle leveling up
-  function levelUp() {
-    player.level++;  // Increase level
-    player.xp = 0;  // Reset XP after level-up
-    player.maxXP += 50;  // Increase XP needed for next level
-  
-    // Stat increases upon leveling up
-    player.health += 10;  // Increase max health
-    player.attack += 2;   // Increase attack
-    player.defense += 1;  // Increase defense
-    player.speed += 1;    // Increase speed
-  
-    player.skillPoints++;  // Award a skill point to unlock abilities or upgrades
-    
-    // Notify player of level-up
-    alert(`Level Up! You are now level ${player.level}.`);
-  
-    // Update the UI with new stats
-    updateStatsDisplay();
-  }
-  
-  function spendSkillPoint(stat) {
-    if (player.skillPoints > 0) {
-        switch(stat) {
-            case "health":
-                player.health += 5;  // Increase health stat
-                break;
-            case "attack":
-                player.attack += 1;  // Increase attack stat
-                break;
-            case "defense":
-                player.defense += 1;  // Increase defense stat
-                break;
-            case "speed":
-                player.speed += 1;  // Increase speed stat
-                break;
-            default:
-                alert("Invalid stat!");
-                return;
-        }
-
-        // Deduct the skill point
-        player.skillPoints--;
-        updateStatsDisplay();  // Update UI with new stats
-        alert(`You have increased ${stat} by 1.`);
-    } else {
-        alert("You don't have any skill points to spend.");
-    }
-}
-
-function updateStatsDisplay() {
-    // Update the player's stats UI
-    document.getElementById("levelDisplay").innerText = `Level: ${player.level}`;
-    document.getElementById("xpDisplay").innerText = `XP: ${player.xp} / ${player.maxXP}`;
-    document.getElementById("healthDisplay").innerText = `Health: ${player.health}`;
-    document.getElementById("attackDisplay").innerText = `Attack: ${player.attack}`;
-    document.getElementById("defenseDisplay").innerText = `Defense: ${player.defense}`;
-    document.getElementById("speedDisplay").innerText = `Speed: ${player.speed}`;
-    document.getElementById("skillPointsDisplay").innerText = `Skill Points: ${player.skillPoints}`;
-}
-
-// Function to update stats dynamically
-function updatePlayerStats() {
-    document.getElementById('playerHealthText').innerText = player.health;
-    document.getElementById('playerAttackText').innerText = player.attack;
-    document.getElementById('playerDefenseText').innerText = player.defense;
-    document.getElementById('playerSpeedText').innerText = player.speed;
-  }
-
 // Global variables and starter kit logic
 let equipment = {
     weapon: "Basic Sword",
@@ -102,6 +5,7 @@ let equipment = {
     armor: "None",  // Add armor slot here
     defense: 0 // Add defense stat to track armor's effect
 };
+let playerHP = 100;
 let inventory = {
     "Iron Ore": 5,
     "Wood": 3,
@@ -557,30 +461,40 @@ function startNewGame() {
 
 // Function to save game data to localStorage
 function saveGameData() {
-    localStorage.setItem("player", JSON.stringify(player));
-    localStorage.setItem("equipment", JSON.stringify(equipment));
+    localStorage.setItem("playerHP", playerHP);
     localStorage.setItem("inventory", JSON.stringify(inventory));
+    localStorage.setItem("equipment", JSON.stringify(equipment));
 }
 
-// Load player data
+// Function to load game data from localStorage
 function loadGameData() {
-    let storedPlayer = localStorage.getItem("player");
-    if (storedPlayer) {
-        player = JSON.parse(storedPlayer);
+    // Load player data (HP)
+    let storedHP = localStorage.getItem("playerHP");
+    if (storedHP) {
+        playerHP = parseInt(storedHP);
     }
 
-    let storedEquipment = localStorage.getItem("equipment");
-    if (storedEquipment) {
-        equipment = JSON.parse(storedEquipment);
-    }
-
+    // Load inventory
     let storedInventory = localStorage.getItem("inventory");
     if (storedInventory) {
         inventory = JSON.parse(storedInventory);
     }
 
-    updateStatsDisplay(); // Update UI with loaded stats
-    updateInventory();    // Update inventory display
+    // Load equipment
+    let storedEquipment = localStorage.getItem("equipment");
+    if (storedEquipment) {
+        equipment = JSON.parse(storedEquipment);
+    }
+
+    // If armor doesn't exist, set default armor (Leather Armor)
+    if (!equipment.armor) {
+        equipment.armor = "Leather Armor";
+    }
+
+    // Update UI with the loaded data
+    updateInventory();           // Update inventory UI
+    renderEquipmentSlots();      // Update the equipment slots (weapon + armor)
+    updateHealthBars(playerHP);  // Update the player's health bar
 }
 window.onload = () => {
     checkStarterKitSelection(); // Load the starter kit if it's stored
