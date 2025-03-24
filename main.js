@@ -8,7 +8,7 @@ let equipment = {
 
 let playerHP = 100;
 
-
+// Items you can gather with the "Gather Resources button"
 const gatherableResources = [
     { name: "Iron Ore", quantity: 1 },
     { name: "Wood", quantity: 1 },
@@ -16,6 +16,7 @@ const gatherableResources = [
     { name: "Steel Ore", quantity: 1 }
 ];
 
+// Making sure that if Item in inventory is 0 it will now show in inventory.
 let inventory = JSON.parse(localStorage.getItem("inventory")) || {
     "Iron Ore": 0,
     "Wood": 0,
@@ -32,21 +33,27 @@ let selectedMonster = 0;
 
 let selectedStarter = ""; // Store the selected starter kit
 
+
+// Construct of what monsters that is available
 const monsters = {
     "Slime": { hp: 20, attack: [2, 5], drops: ["Slime Goo", "Sticky Residue"] },
     "Wolf": { hp: 30, attack: [5, 10], drops: ["Wolf Pelt", "Sharp Fang"] },
     "Goblin": { hp: 40, attack: [6, 12], drops: ["Goblin Ear", "Rusty Dagger"] },
     "Orc": { hp: 60, attack: [8, 15], drops: ["Orc Tooth", "Iron Shard"] }
+
+    // Add more monsters here (Make sure to add another option in HTML)
+    // copy pase one of these and change the name, hp, attack and drops
 };
 
+//Updating player stats when you add a new weapon or armor dynamically
 function updatePlayerStats() {
-    // Update the attack and defense stats dynamically in the UI
     document.getElementById("playerAttack").innerText = equipment.attack;
     document.getElementById("playerDefense").innerText = equipment.defense;
 }
 //Calling the update when player updates attack and defense
 updatePlayerStats();
 
+// Different Crafting recipies
 const craftingRecipes = {
     "Iron Sword": {
         materials: {
@@ -86,6 +93,7 @@ const craftingRecipes = {
     // Add more upgrades here...
 };
 
+// Function on how to craft items
 function craftItem(itemName) {
     console.log(`Attempting to craft: ${itemName}`); // Debug line
     if (craftingRecipes[itemName]) {
@@ -146,7 +154,6 @@ function craftItem(itemName) {
 }
 
 // Toggling crafting menu
-
 function toggleCrafting() {
     // Hide other sections
     document.getElementById('inventoryContainer').style.display = 'none';
@@ -162,6 +169,7 @@ function toggleCrafting() {
     }
   }
 
+// Checking if crafting works after adding materials
 function renderCraftingUI() {
     let craftingDiv = document.getElementById("crafting");
     craftingDiv.innerHTML = "<h2>Crafting</h2>";
@@ -198,39 +206,54 @@ function renderCraftingUI() {
     }
 }
 
+// Gathering Process
+
 let gatherCooldown = 600; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
 let messageElement = document.getElementById("message");
 
 // Function to start the cooldown and delay item rewards
-function startGatherCooldown() {
+function startGatherCooldown(remainingTime) {
     gatherButton.disabled = true;
-    let remainingTime = gatherCooldown;
-
-    // Update message to indicate waiting period
-    messageElement.innerText = "Gathering in progress...";
-    messageElement.style.display = "block";
 
     let countdown = setInterval(() => {
         if (remainingTime <= 0) {
             clearInterval(countdown);
             gatherButton.disabled = false;
             gatherButton.innerText = "Gather Resource";
-            giveGatherReward(); // Give reward after 10 minutes
+            giveGatherReward();
+            localStorage.removeItem("gatherStartTime"); // Clear saved time
+            localStorage.removeItem("gatherRemainingTime");
         } else {
+            //Ensure remaining time is always a valid number
+            
+            if (isNaN(remainingTime) || remainingTime < 0) {
+                clearInterval(countdown);
+                gatherButton.disabled = false
+                gatherButton.innerText = "Gather Resource";
+                return
+            }
+
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
             gatherButton.innerText = `Gathering... (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
             remainingTime--;
+
+            localStorage.setItem("gatherRemainingTime", remainingTime); // Save remaining time
         }
     }, 1000);
 }
+
 
 // Function to handle the gathering process (starts cooldown but delays rewards)
 function gatherResource() {
     if (gatherButton.disabled) return; // Prevent multiple clicks
 
-    startGatherCooldown(); // Start countdown
+    let startTime = Date.now();
+    localStorage.setItem("gatherStartTime", startTime);
+    localStorage.setItem("gatherRemainingTime", gatherCooldown); // Ensure Cooldown is stored correctly
+
+    startGatherCooldown(gatherCooldown); // Start cooldown
 }
 
 function giveGatherReward() {
@@ -309,7 +332,7 @@ function cleanupInventory() {
             // If the item has 0 quantity, delete it from the inventory
             delete inventory[item];
 
-            // Optional: Update the UI to remove this item visually
+            // Update the UI to remove this item visually
             let itemElement = document.getElementById(item); // Assuming item elements have the same ID as item names
             if (itemElement) {
                 itemElement.style.display = 'none'; // Hide the item from the UI
@@ -324,10 +347,6 @@ function cleanupInventory() {
     console.log("Updated inventory:", inventory);
 }
 
-// Example: Call loadGameData on page load or when the player starts the game
-window.onload = function() {
-    loadGameData(); // Call this to load the game and clean up the inventory
-};
 
 // Function to select starter kit
 function selectStarterKit(starter) {
@@ -351,7 +370,7 @@ function selectStarterKit(starter) {
         };
     };
 
-    // Render initial game setup
+    // Render initial game
     renderEquipmentSlots();
     updateInventory();
 }
@@ -760,7 +779,22 @@ function loadGameData() {
 
 // Checking onload
 
-window.onload = () => {
-    checkStarterKitSelection(); // Load the starter kit if it's stored
-    loadGameData(); // Load saved game data from localStorage
+window.onload = function() {
+    checkStarterKitSelection(); 
+    loadGameData(); 
+
+    // Restore gathering cooldown
+    let savedTime = localStorage.getItem("gatherStartTime");
+    if (savedTime) {
+        let elapsedTime = Math.floor((Date.now() - savedTime) / 1000);
+        let remainingTime = gatherCooldown - elapsedTime;
+
+        if (remainingTime > 0) {
+            startGatherCooldown(remainingTime);
+        } else {
+            gatherButton.disabled = false;
+            gatherButton.innerText = "Gather Resource";
+        }
+    }
 };
+
