@@ -67,7 +67,7 @@ const craftingRecipes = {
     "Leather Armor": {
         materials: {
             "Leather": 3,
-            "Wood": 2
+            "Iron Ore": 1
         },
         result: "Leather Armor",
         defenseBoost: 5
