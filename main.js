@@ -95,16 +95,17 @@ const craftingRecipes = {
 
 // Function on how to craft items
 function craftItem(itemName) {
-    console.log(`Attempting to craft: ${itemName}`); // Debug line
+    console.log(`Attempting to craft: ${itemName}`);
+
     if (craftingRecipes[itemName]) {
         const recipe = craftingRecipes[itemName];
         let canCraft = true;
 
-        // Check if player has enough materials
+        // Check if the player has enough materials
         for (let material in recipe.materials) {
-            if (inventory[material] < recipe.materials[material]) {
+            if (!inventory[material] || inventory[material] < recipe.materials[material]) {
                 canCraft = false;
-                break;
+                break; // Stop checking if any material is missing
             }
         }
 
@@ -117,41 +118,28 @@ function craftItem(itemName) {
             // Add the crafted item to the inventory
             inventory[recipe.result] = (inventory[recipe.result] || 0) + 1;
 
-            // Equip the crafted item and replace the existing weapon/armor
-
-            // If the item is a weapon (attack-related), update attack
-            if (itemName.includes("Sword") || itemName.includes("Weapon")) {
-                // Equip the new weapon, replacing any existing weapon
+            // Equip the crafted item (if applicable)
+            if (itemName.includes("Sword")) {
                 equipment.weapon = recipe.result;
-
-                // Apply the new attack boost (replace, not add)
                 equipment.attack = recipe.attackBoost;
-            }
-
-            // If the item is armor (defense-related), update defense
-            if (itemName.includes("Armor")) {
-                // Equip the new armor, replacing any existing armor
+            } else if (itemName.includes("Armor")) {
                 equipment.armor = recipe.result;
-
-                // Apply the new defense boost (replace, not add)
                 equipment.defense = recipe.defenseBoost;
             }
 
-            // Update the UI
-            updateInventory();  // Update inventory display
-            renderEquipmentSlots();  // Update the equipment slots (weapon + armor)
-            alert(`You crafted a ${itemName}!`);
-
-            // Update player stats display
-            updatePlayerStats(); // Ensure stats like attack and defense are updated
-
-            // Save the game data
+            // Update UI
+            updateInventory();
+            renderEquipmentSlots();
+            updatePlayerStats();
             saveGameData();
+
+            alert(`You crafted a ${itemName}!`);
         } else {
             alert("You don't have enough materials to craft this.");
         }
     }
 }
+
 
 // Toggling crafting menu
 function toggleCrafting() {
