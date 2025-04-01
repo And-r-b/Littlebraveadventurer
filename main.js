@@ -216,7 +216,7 @@ function renderCraftingUI() {
     }
 }
 
-// Gathering Process
+// Gathering Process with Persistent Timer
 
 let gatherCooldown = 600; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
@@ -227,29 +227,27 @@ function startGatherCooldown(remainingTime) {
     gatherButton.disabled = true;
 
     let countdown = setInterval(() => {
+        let elapsedTime = Math.floor((Date.now() - localStorage.getItem("gatherStartTime")) / 1000);
+        remainingTime = gatherCooldown - elapsedTime;
+
         if (remainingTime <= 0) {
             clearInterval(countdown);
             gatherButton.disabled = false;
             gatherButton.innerText = "Gather Resource";
             giveGatherReward();
             localStorage.removeItem("gatherStartTime"); // Clear saved time
-            localStorage.removeItem("gatherRemainingTime");
         } else {
-            //Ensure remaining time is always a valid number
-            
+            // Ensure remaining time is always a valid number
             if (isNaN(remainingTime) || remainingTime < 0) {
                 clearInterval(countdown);
-                gatherButton.disabled = false
+                gatherButton.disabled = false;
                 gatherButton.innerText = "Gather Resource";
-                return
+                return;
             }
 
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
             gatherButton.innerText = `Gathering... (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
-            remainingTime--;
-
-            localStorage.setItem("gatherRemainingTime", remainingTime); // Save remaining time
         }
     }, 1000);
 }
@@ -261,7 +259,6 @@ function gatherResource() {
 
     let startTime = Date.now();
     localStorage.setItem("gatherStartTime", startTime);
-    localStorage.setItem("gatherRemainingTime", gatherCooldown); // Ensure Cooldown is stored correctly
 
     startGatherCooldown(gatherCooldown); // Start cooldown
 }
@@ -474,6 +471,36 @@ function toggleSkills() {
 let prayCooldownActive = false;
 let prayCooldownTime = 300; // 5 minutes in seconds
 let initialPrayCooldownTime = prayCooldownTime; // Store the original cooldown time
+let cooldownInterval; // Track the interval to prevent multiple intervals
+
+// When the game loads, check if there's a saved cooldown state in localStorage
+window.addEventListener('load', function () {
+    if (localStorage.getItem('prayCooldownTime') && localStorage.getItem('prayCooldownActive') === 'true') {
+        prayCooldownTime = parseInt(localStorage.getItem('prayCooldownTime'));
+        prayCooldownActive = true;
+        document.getElementById('prayButton').disabled = true; // Disable the button
+        document.getElementById('prayCooldown').style.display = 'inline'; // Show cooldown message
+        updateCooldownDisplay();
+        startCooldown();
+    }
+});
+
+// Listen for visibility changes (tab switching or browser focus change)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // When the game loses focus, save the current cooldown time to localStorage
+        localStorage.setItem('prayCooldownTime', prayCooldownTime);
+        localStorage.setItem('prayCooldownActive', prayCooldownActive.toString());
+    } else {
+        // When the game regains focus, continue the cooldown
+        if (prayCooldownActive) {
+            // Don't start a new interval if it's already running
+            if (!cooldownInterval) {
+                startCooldown();
+            }
+        }
+    }
+});
 
 function usePray() {
     if (prayCooldownActive) return; // Prevent multiple activations
@@ -490,25 +517,48 @@ function usePray() {
     let prayButton = document.getElementById('prayButton');
     prayButton.textContent = 'Praying...'; // Set text while praying
 
-    // Start the cooldown and update the timer every second
-    let interval = setInterval(() => {
-        console.log('Interval triggered'); // Debug log to check if the interval is working
-        if (prayCooldownTime > 0) {
-            prayCooldownTime--; // Decrease the cooldown time by 1 second
-            document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`; // Update the timer text
-        } else {
-            clearInterval(interval); // Stop the timer when it's done
-            prayCooldownActive = false; // Reset cooldown status
-            prayButton.disabled = false; // Enable the button
-            prayButton.textContent = 'Pray'; // Reset the button text to 'Pray'
-            document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
+    // Save the initial time when prayer is used
+    localStorage.setItem('prayStartTime', Date.now());
 
-            // Reset the cooldown time for the next use
-            prayCooldownTime = initialPrayCooldownTime;
-        }
-    }, 1000); // Update every second
+    // Start the cooldown and update the timer every second
+    startCooldown();
 }
 
+function startCooldown() {
+    // If the start time exists, calculate the elapsed time
+    const startTime = localStorage.getItem('prayStartTime');
+    if (startTime) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000); // Calculate elapsed time in seconds
+        prayCooldownTime = Math.max(initialPrayCooldownTime - elapsed, 0); // Ensure cooldown doesn't go negative
+    }
+
+    // Only start the interval if it's not already running
+    if (!cooldownInterval) {
+        cooldownInterval = setInterval(() => {
+            if (prayCooldownTime > 0) {
+                prayCooldownTime--; // Decrease the cooldown time by 1 second
+                updateCooldownDisplay();
+                localStorage.setItem('prayCooldownTime', prayCooldownTime); // Store updated time in localStorage
+            } else {
+                clearInterval(cooldownInterval); // Stop the timer when it's done
+                cooldownInterval = null; // Reset the interval tracker
+                prayCooldownActive = false; // Reset cooldown status
+                localStorage.setItem('prayCooldownActive', 'false'); // Update status in localStorage
+                document.getElementById('prayButton').disabled = false; // Enable the button
+                document.getElementById('prayButton').textContent = 'Pray'; // Reset the button text to 'Pray'
+                document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
+
+                // Reset the cooldown time for the next use
+                prayCooldownTime = initialPrayCooldownTime;
+                localStorage.removeItem('prayStartTime'); // Remove start time
+            }
+        }, 1000); // Update every second
+    }
+}
+
+function updateCooldownDisplay() {
+    document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`;
+}
 
 // Toggle Settings Buttons
 
@@ -788,7 +838,6 @@ function loadGameData() {
 }
 
 // Checking onload
-
 window.onload = function() {
     checkStarterKitSelection(); 
     loadGameData(); 
