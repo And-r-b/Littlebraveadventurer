@@ -55,13 +55,35 @@ updatePlayerStats();
 
 // Different Crafting recipies
 const craftingRecipes = {
+    "Wooden Sword": {
+        materials: {
+            "Wood": 3,
+            "Leather": 2
+        },
+        result: "Wooden Sword",
+        attackBoost: 7
+    },
+
     "Iron Sword": {
         materials: {
-            "Iron Ore": 3,
-            "Wood": 2
+            "Iron Ore": 5,
+            "Wood": 3,
+            "Leather": 3,
+            "Wooden Sword": 1
         },
         result: "Iron Sword",
         attackBoost: 10
+    },
+
+    "Steel Sword": {
+        materials: {
+            "Steel Ore": 5,
+            "Iron Ore": 3,
+            "Leather": 3,
+            "Iron Sword": 1
+        },
+        result: "Steel Sword",
+        attackBoost: 15
     },
 
     "Leather Armor": {
