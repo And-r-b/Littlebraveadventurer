@@ -106,11 +106,11 @@ body {
   /* Game Layout: Inventory (Left) + Fight Container (Right) */
   .game-layout {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    justify-content: center;
     width: 100%;
     margin: 20px auto;
     transition: all 0.5s ease-in-out;
+    position: relative;
 }
 
 
@@ -129,12 +129,23 @@ body {
   border: 2px solid white; /* White border for contrast */
   padding: 10px;
   border-radius: 10px; /* Rounded edges */
-  width: 300px;
-  height: auto;
+  width: 200px;
+  max-height: fit-content;
   color: white; /* Ensure text is visible */
   margin-right: 20px;
 }
   
+#weapons, #armor {
+  background-color: #28a745;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+
   /* Inventory Item */
   .inventory-item {
     background: white;
@@ -243,13 +254,13 @@ body {
 
 #settingsContainer {
   background-color: rgb(15, 14, 14);
-  padding: 20px;
+  padding:10px;
   border-radius: 10px; /* Smooth rounded corners */
   border: 2px solid rgba(255, 255, 255, 0.678); /* Subtle border */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Soft shadow */
   color: white; /* Ensure text is readable */
   max-width: 400px; /* Prevent it from stretching too much */
-  /* margin-left: 100px; */
+  height: fit-content;
   font-family: Arial, sans-serif; /* Clean font */
 }
 
@@ -356,9 +367,8 @@ body {
   padding: 10px;
   border-radius: 10px; /* Rounded edges */
   width: 300px;
+  height: fit-content;
   color: white; /* Ensure text is visible */
-  right: 0; /* Align to the right inside .game-layout */
-  top: 0;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Soft shadow */
   margin-right: 20px;
 }
@@ -394,12 +404,11 @@ body {
   /* Fight Container Column */
   .fight-container {
     width: calc(70% - 320px); /* Adjust width based on the Skills container width */
+    height: fit-content;
     background-color: #333;
     border-radius: 10px;
     transition: width 0.5s ease-in-out;
-    margin-left: auto;  /* Center the container horizontally */
-    margin-right: auto; /* Center the container horizontally */
-  }
+}
   
   /* Health Bars Container (within Fight Container) */
   .health-bars {
