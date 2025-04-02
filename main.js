@@ -63,7 +63,6 @@ const craftingRecipes = {
         result: "Wooden Sword",
         attackBoost: 7
     },
-
     "Iron Sword": {
         materials: {
             "Iron Ore": 5,
@@ -512,6 +511,9 @@ function usePray() {
     // Start healing
     playerHP = Math.min(playerHP + 50, 100); // Heal but not over max HP
     updateHealthBars(playerHP); // Update health bars
+
+    // Save HP to localStorage to persist after refresh
+    localStorage.setItem('playerHP', playerHP);
 
     // Update the Pray button text to indicate it's in use
     let prayButton = document.getElementById('prayButton');
