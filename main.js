@@ -774,6 +774,18 @@ function startNewGame() {
         defense: 0
     };
 
+    //  Reset Pray Cooldown Variables
+    prayCooldownActive = false;
+    prayCooldownTime = initialPrayCooldownTime;
+    localStorage.removeItem("prayStartTime");  // Remove cooldown start time
+    localStorage.removeItem("prayCooldownTime"); // Remove stored cooldown time
+    localStorage.removeItem("prayCooldownActive"); // Remove stored cooldown state
+
+    //  Reset Pray Button UI
+    document.getElementById('prayButton').disabled = false;
+    document.getElementById('prayButton').textContent = "Pray"; // Reset button text
+    document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
+
     // Hide game content and show starter selection screen
     document.getElementById("gameContent").style.display = "none";
     document.getElementById("starterSelection").style.display = "block";
@@ -795,6 +807,7 @@ function startNewGame() {
     // Directly reload the page by setting location.href
     location.href = location.href;  // Reloads the page
 }
+
 
 // Function to save game data to localStorage
 function saveGameData() {
