@@ -45,6 +45,42 @@ const monsters = {
     // copy pase one of these and change the name, hp, attack and drops
 };
 
+function selectMonster() {
+    // Get the selected monster from the dropdown
+    const selectedMonster = document.getElementById("monsterSelect").value;
+    
+    // Define a mapping of monsters to their background images and images
+    const backgrounds = {
+      'Slime': {
+        background: 'url("/images/cave.png")',
+        monsterImage: '/images/slime.png'
+      },
+      'Wolf': {
+        background: 'url("/images/fantasy-forest.png")',
+        monsterImage: '/images/wolf.png'
+      },
+      'Goblin': {
+        background: 'url("/images/goblin-camp.png")',
+        monsterImage: '/images/goblin.png'
+      },
+      'Orc': {
+        background: 'url("/images/orc-camp.png")',
+        monsterImage: '/images/orc.png'
+      }
+    };
+  
+    // Get the monster data based on selection
+    const monsterData = backgrounds[selectedMonster];
+  
+    // Change the background of the body
+    document.body.style.backgroundImage = monsterData.background;
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundSize = 'cover';
+    
+    // Update the monster image in the fight box
+    document.querySelector('.monster-image img').src = monsterData.monsterImage;
+  }
+
 //Updating player stats when you add a new weapon or armor dynamically
 function updatePlayerStats() {
     document.getElementById("playerAttack").innerText = equipment.attack;
@@ -358,13 +394,11 @@ function cleanupInventory() {
 function selectStarterKit(starter) {
     // Store the selected starter in localStorage
     localStorage.setItem("starterKit", starter);
-    
+
     // Store the selected starter in the global variable
     selectedStarter = starter;
 
-    // Hide the starter selection and show the game content
-    document.getElementById("starterSelection").style.display = "none";
-    document.getElementById("gameContent").style.display = "block";
+    const selectedMonster = 'Slime';
 
     // Set the equipment based on the selected starter kit
     if (starter === "Knight") {
@@ -374,11 +408,22 @@ function selectStarterKit(starter) {
             armor: "Common Clothing", // Start with leather armor
             defense: 0 // Leather Armor provides some defense
         };
-    };
+    }
+
+    // Remove the background image after class selection (using JavaScript to remove it)
+    document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
+
+    // Hide the starter selection screen and show the game content
+    document.getElementById("starterSelection").style.display = "none";
+    document.getElementById("gameContent").style.display = "block";
+
+    // Set the selected monster (Slime) as default
+    document.getElementById("monsterSelect").value = selectedMonster;
 
     // Render initial game
     renderEquipmentSlots();
     updateInventory();
+    selectMonster();
 }
 
 function checkStarterKitSelection() {

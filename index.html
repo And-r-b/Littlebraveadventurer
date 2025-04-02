@@ -9,19 +9,20 @@
   <link rel="shortcut icon" href="./images/smallknight.jpg" type="image/x-icon" />
 </head>
 <body>
-  <h1>Little Brave Adventurer</h1>
-
+  
   <!-- Starter Kit Selection Screen -->
   <div id="starterSelection">
+    <h1>Little Brave Adventurer</h1>
     <h2>Choose Your Class</h2>
     <button onclick="selectStarterKit('Knight')">Knight</button>
   </div>
 
   <!-- Game Content -->
   <div id="gameContent" style="display: none;">
+    <h1>Little Brave Adventurer</h1>
     <h2>Fight Monsters</h2>
     <p>Select a monster to fight:</p>
-    <select id="monsterSelect">
+    <select id="monsterSelect" onchange="selectMonster()">
       <option value="Slime">Slime</option>
       <option value="Wolf">Wolf</option>
       <option value="Goblin">Goblin</option>
