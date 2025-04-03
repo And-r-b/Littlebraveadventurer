@@ -141,7 +141,7 @@ const craftingRecipes = {
 
     "Steel Armor": {
         materials: {
-            "Steel Ore": 5,
+            "Steel Ore": 10,
             "Iron Armor": 1  // Requires Iron Armor as material
         },
         result: "Steel Armor",
@@ -149,6 +149,63 @@ const craftingRecipes = {
     },
     // Add more upgrades here...
 };
+
+// Function to display weapons or armor in the UI
+function displayItems(itemCategory) {
+    const container = document.getElementById('items-container');
+    container.innerHTML = '';  // Clear any existing items
+
+    let itemsToDisplay = [];
+
+    // Determine which items to display based on the category
+    if (itemCategory === 'weapons') {
+        itemsToDisplay = ["Wooden Sword", "Iron Sword", "Steel Sword"];
+    } else if (itemCategory === 'armor') {
+        itemsToDisplay = ["Leather Armor", "Iron Armor", "Steel Armor"];
+    }
+
+    // Loop through the selected items (weapons or armor)
+    itemsToDisplay.forEach(itemName => {
+        let recipe = craftingRecipes[itemName];
+        let canCraft = true;
+        let missingMaterials = [];
+
+        // Check if the player has enough materials
+        for (let material in recipe.materials) {
+            if (!inventory[material] || inventory[material] < recipe.materials[material]) {
+                canCraft = false;
+                missingMaterials.push(`${material}: ${recipe.materials[material] - (inventory[material] || 0)}`);
+            }
+        }
+
+        // Add previous item check (e.g., Steel Armor requires Leather Armor)
+        if (itemName === "Steel Armor" && !inventory["Leather Armor"]) {
+            canCraft = false;
+            missingMaterials.push("Leather Armor");
+        }
+
+        // Create the UI element for this item
+        let itemDiv = document.createElement("div");
+        itemDiv.classList.add("item");
+
+        if (canCraft) {
+            itemDiv.innerHTML = `<button onclick="craftItem('${itemName}')">${itemName}</button>`;
+        } else {
+            itemDiv.innerHTML = `<button disabled>${itemName} - Missing: ${missingMaterials.join(", ")}</button>`;
+        }
+
+        container.appendChild(itemDiv);
+    });
+}
+
+// Event listeners for "Weapons" and "Armor" buttons
+document.getElementById('weapons').addEventListener('click', () => {
+    displayItems('weapons');  // Display weapons
+});
+
+document.getElementById('armor').addEventListener('click', () => {
+    displayItems('armor');  // Display armor
+});
 
 // Function on how to craft items
 function craftItem(itemName) {
@@ -197,6 +254,96 @@ function craftItem(itemName) {
     }
 }
 
+// Function to display weapons in the crafting container
+function showWeapons() {
+    const itemsContainer = document.getElementById("items-container");
+    itemsContainer.innerHTML = '';  // Clear the container
+  
+    // Loop through all crafting recipes and display only weapons
+    for (let itemName in craftingRecipes) {
+      if (itemName.includes("Sword")) {  // Check if the item is a weapon
+        let recipe = craftingRecipes[itemName];
+        let canCraft = true;
+  
+        // Check if player has required materials
+        for (let material in recipe.materials) {
+          if (inventory[material] < recipe.materials[material]) {
+            canCraft = false;
+            break;
+          }
+        }
+  
+        // Create the UI element for this weapon
+        let itemDiv = document.createElement("div");
+        itemDiv.classList.add("crafting-item");
+  
+        if (canCraft) {
+          itemDiv.innerHTML = `
+            <h3>${itemName}</h3>
+            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
+            <button onclick="craftItem('${itemName}')">Craft ${itemName}</button>
+          `;
+        } else {
+          itemDiv.innerHTML = `
+            <h3>${itemName}</h3>
+            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
+            <button disabled>Can't Craft</button>
+          `;
+        }
+  
+        itemsContainer.appendChild(itemDiv);
+      }
+    }
+  }
+  
+  // Function to display armor in the crafting container
+  function showArmor() {
+    const itemsContainer = document.getElementById("items-container");
+    itemsContainer.innerHTML = '';  // Clear the container
+  
+    // Loop through all crafting recipes and display only armor
+    for (let itemName in craftingRecipes) {
+      if (itemName.includes("Armor")) {  // Check if the item is armor
+        let recipe = craftingRecipes[itemName];
+        let canCraft = true;
+  
+        // Check if player has required materials
+        for (let material in recipe.materials) {
+          if (inventory[material] < recipe.materials[material]) {
+            canCraft = false;
+            break;
+          }
+        }
+  
+        // Create the UI element for this armor
+        let itemDiv = document.createElement("div");
+        itemDiv.classList.add("crafting-item");
+  
+        if (canCraft) {
+          itemDiv.innerHTML = `
+            <h3>${itemName}</h3>
+            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
+            <button onclick="craftItem('${itemName}')">Craft ${itemName}</button>
+          `;
+        } else {
+          itemDiv.innerHTML = `
+            <h3>${itemName}</h3>
+            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
+            <button disabled>Can't Craft</button>
+          `;
+        }
+  
+        itemsContainer.appendChild(itemDiv);
+      }
+    }
+  }
+  
+  // Event listener for "Weapons" button
+  document.getElementById('weapons').addEventListener('click', showWeapons);
+  
+  // Event listener for "Armor" button
+  document.getElementById('armor').addEventListener('click', showArmor);
+
 
 // Toggling crafting menu
 function toggleCrafting() {
@@ -221,20 +368,28 @@ function renderCraftingUI() {
 
     // Loop through crafting recipes and display available upgrades
     for (let itemName in craftingRecipes) {
+        // Skip rendering this item if it's already in the inventory (i.e., already crafted)
+        if (inventory[itemName] && inventory[itemName] > 0) {
+            continue;  // Skip if item is already crafted
+        }
+
         let recipe = craftingRecipes[itemName];
         let canCraft = true;
+        let buttonText = `Craft ${itemName}`;  // Default button text
 
-        // Check if player has the required items
+        // Check if player has the required items (for crafting)
         for (let material in recipe.materials) {
             if (inventory[material] < recipe.materials[material]) {
-                canCraft = false;
+                canCraft = false;  // Not enough materials
+                buttonText = `Can't Craft ${itemName} (Not Enough Materials)`;  // Update button text
                 break;
             }
         }
 
         // Add previous item check (e.g., Steel Armor requires Leather Armor)
         if (itemName === "Steel Armor" && !inventory["Leather Armor"]) {
-            canCraft = false;
+            canCraft = false;  // Missing required base item
+            buttonText = `Can't Craft ${itemName} (Missing Leather Armor)`;  // Update button text
         }
 
         // Create the UI element for this item
@@ -242,9 +397,11 @@ function renderCraftingUI() {
         itemDiv.classList.add("crafting-item");
 
         if (canCraft) {
-            itemDiv.innerHTML = `<button onclick="craftItem('${itemName}')">${itemName}</button>`;
+            // Item can be crafted
+            itemDiv.innerHTML = `<button onclick="craftItem('${itemName}')">${buttonText}</button>`;
         } else {
-            itemDiv.innerHTML = `<button disabled>${itemName}</button>`;
+            // If not enough materials, display the message
+            itemDiv.innerHTML = `<button disabled>${buttonText}</button>`;
         }
 
         craftingDiv.appendChild(itemDiv);

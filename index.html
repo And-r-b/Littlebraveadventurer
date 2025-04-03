@@ -76,36 +76,8 @@
           <h2>Crafting</h2>
           <button id="weapons">Weapons</button>
           <button id="armor">Armor</button>
-          <div class="crafting-item">
-            <h3>Wooden Sword</h3>
-            <p>Materials: 3 Wood + 2 Leather </p>
-            <button onclick="craftItem('Wooden Sword')">Craft Wooden Sword</button>
-        </div>
-          <div class="crafting-item">
-            <h3>Iron Sword</h3>
-            <p>Materials: 5 Iron Ore + 3 Wood + 3 Leather + 1 Wooden Sword</p>
-            <button onclick="craftItem('Iron Sword')">Craft Iron Sword</button>
-        </div>
-          <div class="crafting-item">
-              <h3>Steel Sword</h3>
-              <p>Materials: 5 Steel Ore + 3 Iron Ore + 3 Leather + 1 Iron Sword</p>
-              <button onclick="craftItem('Steel Sword')">Craft Steel Sword</button>
-          </div>
-          <div class="crafting-item">
-            <h3>Leather Armor</h3>
-            <p>Materials: 4 Leather, 1 Iron Ore</p>
-            <button onclick="craftItem('Leather Armor')">Craft Leather Armor</button>
-          </div>
-          <div class="crafting-item">
-              <h3>Iron Armor</h3>
-              <p>Materials: 10 Iron Ore, 1 Leather Armor</p>
-              <button onclick="craftItem('Iron Armor')">Craft Iron Armor</button>
-          </div>
-          <div class="crafting-item">
-              <h3>Steel Armor</h3>
-              <p>Materials: 5 Steel Ore, 1 Iron Armor</p>
-              <button onclick="craftItem('Steel Armor')">Craft Steel Armor</button>
-          </div>
+          <!-- This container will hold the dynamically generated weapons or armor -->
+          <div id="items-container"></div>
         </div>
       </div>
 
