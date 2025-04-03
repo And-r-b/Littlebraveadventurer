@@ -410,7 +410,7 @@ function renderCraftingUI() {
 
 // Gathering Process with Persistent Timer
 
-let gatherCooldown = 10; // 10 minutes in seconds
+let gatherCooldown = 600; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
 let messageElement = document.getElementById("message");
 
