@@ -235,10 +235,10 @@ function craftItem(itemName) {
             // Equip the crafted item (if applicable)
             if (itemName.includes("Sword")) {
                 equipment.weapon = recipe.result;
-                equipment.attack = recipe.attackBoost;
+                equipment.attack = recipe.attackBoost || 0;
             } else if (itemName.includes("Armor")) {
                 equipment.armor = recipe.result;
-                equipment.defense = recipe.defenseBoost;
+                equipment.defense = recipe.defenseBoost || 0;
             }
 
             // Update UI
@@ -599,17 +599,28 @@ function checkStarterKitSelection() {
 
 // Function to render equipment slots (e.g., weapon)
 function renderEquipmentSlots() {
-    // Update Weapon Slot
-    const weaponSlot = document.getElementById("weaponSlot");
-    if (weaponSlot) {
-        weaponSlot.innerHTML = `Weapon: ${equipment.weapon || "None"}`;
+    const weaponSlot = document.getElementById('weaponSlot');
+    const armorSlot = document.getElementById('armorSlot');
+    const attackDisplay = document.getElementById('playerAttack');
+    const defenseDisplay = document.getElementById('playerDefense');
+
+    // Update weapon slot
+    if (equipment.weapon) {
+        weaponSlot.textContent = `Weapon: ${equipment.weapon}`;
+    } else {
+        weaponSlot.textContent = "Weapon: None";
     }
 
-    // Update Armor Slot
-    const armorSlot = document.getElementById("armorSlot");
-    if (armorSlot) {
-        armorSlot.innerHTML = `Armor: ${equipment.armor || "None"}`;
+    // Update armor slot
+    if (equipment.armor) {
+        armorSlot.textContent = `Armor: ${equipment.armor}`;
+    } else {
+        armorSlot.textContent = "Armor: None";
     }
+
+    // Update the player's attack and defense stats in the health bar section
+    attackDisplay.textContent = equipment.attack;  // Update attack value
+    defenseDisplay.textContent = equipment.defense; // Update defense value
 }
 // Function to update the inventory display
 function updateInventory(newLoot = "") {
@@ -1040,9 +1051,11 @@ function loadGameData() {
         equipment = JSON.parse(storedEquipment);
     }
 
-    // If armor doesn't exist, set default armor (Leather Armor)
-    if (!equipment.armor) {
-        equipment.armor = "Leather Armor";
+      if (equipment.attack === undefined) {
+        equipment.attack = 0;
+    }
+    if (equipment.defense === undefined) {
+        equipment.defense = 0;
     }
 
     // Cleans up inventory to remove items that is 0
