@@ -36,10 +36,10 @@ let selectedStarter = ""; // Store the selected starter kit
 
 // Construct of what monsters that is available
 const monsters = {
-    "Slime": { hp: 20, attack: [2, 5], drops: ["Slime Goo", "Sticky Residue"] },
-    "Wolf": { hp: 30, attack: [5, 10], drops: ["Wolf Pelt", "Sharp Fang"] },
-    "Goblin": { hp: 40, attack: [6, 12], drops: ["Goblin Ear", "Rusty Dagger"] },
-    "Orc": { hp: 60, attack: [8, 15], drops: ["Orc Tooth", "Iron Shard"] }
+    "Slime": { hp: 20, attack: [4, 8], drops: ["Slime Goo", "Sticky Residue"] },
+    "Wolf": { hp: 40, attack: [7, 13], drops: ["Wolf Pelt", "Sharp Fang"] },
+    "Goblin": { hp: 60, attack: [10, 15], drops: ["Goblin Ear", "Rusty Dagger"] },
+    "Orc": { hp: 80, attack: [15, 20], drops: ["Orc Tooth", "Iron Shard"] }
 
     // Add more monsters here (Make sure to add another option in HTML)
     // copy pase one of these and change the name, hp, attack and drops
