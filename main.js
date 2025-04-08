@@ -1,6 +1,6 @@
 // Global variables and starter kit
 let equipment = {
-    weapon: "Basic Sword",
+    weapon: "Wooden Sword",
     attack: 5,
     armor: "None",  // Add armor slot here
     defense: 0 // Add defense stat to track armor's effect
@@ -39,7 +39,8 @@ const monsters = {
     "Slime": { hp: 20, attack: [4, 8], drops: ["Slime Goo", "Sticky Residue"] },
     "Wolf": { hp: 40, attack: [7, 13], drops: ["Wolf Pelt", "Sharp Fang"] },
     "Goblin": { hp: 60, attack: [10, 15], drops: ["Goblin Ear", "Rusty Dagger"] },
-    "Orc": { hp: 80, attack: [15, 20], drops: ["Orc Tooth", "Iron Shard"] }
+    "Orc": { hp: 80, attack: [15, 20], drops: ["Orc Tooth", "Iron Shard"] },
+    "Angus": { hp: 120, attack: [30, 35], drops: ["Fox Hat", "Explosive Residue", "Wheat Straw"] }
 
     // Add more monsters here (Make sure to add another option in HTML)
     // copy pase one of these and change the name, hp, attack and drops
@@ -49,7 +50,7 @@ function selectMonster() {
     // Get the selected monster from the dropdown
     const selectedMonster = document.getElementById("monsterSelect").value;
     
-    // Define a mapping of monsters to their background images and images
+    // Define a mapping of monsters to their background image and the monster image
     const backgrounds = {
       'Slime': {
         background: 'url("/images/cave.png")',
@@ -66,6 +67,10 @@ function selectMonster() {
       'Orc': {
         background: 'url("/images/orc-camp.png")',
         monsterImage: '/images/orc.png'
+      },
+      'Angus': {
+        background: 'url("/images/annesburg.png")',
+        monsterImage: '/images/angus.png'
       }
     };
   
@@ -91,23 +96,55 @@ updatePlayerStats();
 
 // Different Crafting recipies
 const craftingRecipes = {
-    "Wooden Sword": {
+    // Weapons
+    "Basic Sword": {
         materials: {
             "Wood": 3,
             "Leather": 2
         },
-        result: "Wooden Sword",
+        result: "Basic Sword",
         attackBoost: 7
     },
+
+    "Slime Sword": {
+        materials: {
+            "Slime Goo": 3,
+            "Sticky Residue": 2
+        },
+        result: "Slime Sword",
+        attackBoost: 9
+    },
+
     "Iron Sword": {
         materials: {
             "Iron Ore": 5,
             "Wood": 3,
             "Leather": 3,
-            "Wooden Sword": 1
+            "Basic Sword": 1
         },
         result: "Iron Sword",
-        attackBoost: 10
+        attackBoost: 14
+    },
+
+    "Sharp-Fanged Blade": {
+        materials: {
+            "Sharp Fang": 3,
+            "Wood": 2,
+            "Iron Ore": 5
+        },
+        result: "Sharp-Fanged Blade",
+        attackBoost: 16
+    },
+
+    "Sharpend Goblin Blade": {
+        materials: {
+            "Rusty Dagger": 3,
+            "Sticky Residue": 2,
+            "Wood": 3,
+            "Iron Ore": 10
+        },
+        result: "Sharpend Goblin Blade",
+        attackBoost: 20
     },
 
     "Steel Sword": {
@@ -118,9 +155,31 @@ const craftingRecipes = {
             "Iron Sword": 1
         },
         result: "Steel Sword",
-        attackBoost: 15
+        attackBoost: 25
     },
 
+    "Orcish Blade": {
+        materials: {
+            "Orc Tooth": 5,
+            "Iron Shard": 10,
+            "Steel Ore": 10
+
+        },
+        result: "Orcish Blade",
+        attackBoost: 30
+    },
+
+    "Explosive Blade (Legendary)": {
+        materials: {
+            "Fox Hat": 5,
+            "Explosive Residue": 10,
+            "Wheat Straw": 15
+        },
+        result: "Explosive Blade (Legendary)",
+        attackBoost: 40
+    },
+    
+    // Armor
     "Leather Armor": {
         materials: {
             "Leather": 3,
@@ -129,6 +188,14 @@ const craftingRecipes = {
         result: "Leather Armor",
         defenseBoost: 5
     },
+    "Slime Armor": {
+        materials: {
+            "Slime Goo": 10,
+            "Sticky Residue": 5
+        },
+        result: "Slime Armor",
+        defenseBoost: 9
+    },
 
     "Iron Armor": {
         materials: {
@@ -136,7 +203,28 @@ const craftingRecipes = {
             "Leather Armor": 1 // Requires Leather Armor as material
         },
         result: "Iron Armor",
-        defenseBoost: 7
+        defenseBoost: 13
+    },
+
+    "Wolf Armor": {
+        materials: {
+            "Wolf Pelt": 10,
+            "Iron Ore": 10,
+            "Leather": 5
+        },
+        result: "Wolf Armor",
+        defenseBoost: 16
+    },
+
+    "Goblin-Made Armor": {
+        materials: {
+            "Rusty Dagger": 5,
+            "Sticky Residue": 2,
+            "Iron Ore": 5,
+            "Steel Ore": 10
+        },
+        result: "Goblin-Made Armor",
+        defenseBoost: 20
     },
 
     "Steel Armor": {
@@ -145,54 +233,67 @@ const craftingRecipes = {
             "Iron Armor": 1  // Requires Iron Armor as material
         },
         result: "Steel Armor",
-        defenseBoost: 13
+        defenseBoost: 24
     },
+
+    "Orcish Armor": {
+        materials: {
+            "Leather": 5,
+            "Orc Tooth": 10,
+            "Iron Shard": 10,
+            "Steel Ore": 10
+        },
+        result: "Orcish Armor",
+        defenseBoost: 27
+    },
+
+    "Special Fox Hat (Legendary)": {
+        materials: {
+            "Fox Hat": 1,
+            "Explosive Residue": 5,
+            "Wheat Straw": 1
+        },
+        result: "Special Fox Hat (Legendary)",
+        defenseBoost: 35
+    },
+    
     // Add more upgrades here...
 };
 
 // Function to display weapons or armor in the UI
 function displayItems(itemCategory) {
     const container = document.getElementById('items-container');
-    container.innerHTML = '';  // Clear any existing items
+    container.innerHTML = '';  // Clear previous items
 
-    let itemsToDisplay = [];
+    // Dynamically collect items based on category
+    const itemsToDisplay = Object.entries(craftingRecipes)
+        .filter(([_, recipe]) => {
+            if (itemCategory === 'weapons') return recipe.attackBoost !== undefined;
+            if (itemCategory === 'armor') return recipe.defenseBoost !== undefined;
+            return false;
+        });
 
-    // Determine which items to display based on the category
-    if (itemCategory === 'weapons') {
-        itemsToDisplay = ["Wooden Sword", "Iron Sword", "Steel Sword"];
-    } else if (itemCategory === 'armor') {
-        itemsToDisplay = ["Leather Armor", "Iron Armor", "Steel Armor"];
-    }
-
-    // Loop through the selected items (weapons or armor)
-    itemsToDisplay.forEach(itemName => {
-        let recipe = craftingRecipes[itemName];
+    // Loop through filtered items
+    itemsToDisplay.forEach(([itemName, recipe]) => {
         let canCraft = true;
-        let missingMaterials = [];
 
-        // Check if the player has enough materials
         for (let material in recipe.materials) {
             if (!inventory[material] || inventory[material] < recipe.materials[material]) {
                 canCraft = false;
-                missingMaterials.push(`${material}: ${recipe.materials[material] - (inventory[material] || 0)}`);
+                break;
             }
         }
 
-        // Add previous item check (e.g., Steel Armor requires Leather Armor)
-        if (itemName === "Steel Armor" && !inventory["Leather Armor"]) {
-            canCraft = false;
-            missingMaterials.push("Leather Armor");
-        }
+        const itemDiv = document.createElement("div");
+        itemDiv.classList.add("crafting-item");
 
-        // Create the UI element for this item
-        let itemDiv = document.createElement("div");
-        itemDiv.classList.add("item");
-
-        if (canCraft) {
-            itemDiv.innerHTML = `<button onclick="craftItem('${itemName}')">${itemName}</button>`;
-        } else {
-            itemDiv.innerHTML = `<button disabled>${itemName} - Missing: ${missingMaterials.join(", ")}</button>`;
-        }
+        itemDiv.innerHTML = `
+            <h3>${itemName}</h3>
+            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
+            <button ${canCraft ? `onclick="craftItem('${itemName}')"` : "disabled"}>
+                ${canCraft ? `Craft ${itemName}` : "Can't Craft"}
+            </button>
+        `;
 
         container.appendChild(itemDiv);
     });
@@ -233,12 +334,18 @@ function craftItem(itemName) {
             inventory[recipe.result] = (inventory[recipe.result] || 0) + 1;
 
             // Equip the crafted item (if applicable)
-            if (itemName.includes("Sword")) {
-                equipment.weapon = recipe.result;
-                equipment.attack = recipe.attackBoost || 0;
-            } else if (itemName.includes("Armor")) {
-                equipment.armor = recipe.result;
-                equipment.defense = recipe.defenseBoost || 0;
+            if (recipe.attackBoost !== undefined) {
+                // It's a weapon
+                if (recipe.attackBoost > (equipment.attack || 0)) {
+                    equipment.weapon = recipe.result;
+                    equipment.attack = recipe.attackBoost;
+                }
+            } else if (recipe.defenseBoost !== undefined) {
+                // It's armor
+                if (recipe.defenseBoost > (equipment.defense || 0)) {
+                    equipment.armor = recipe.result;
+                    equipment.defense = recipe.defenseBoost;
+                }
             }
 
             // Update UI
@@ -254,95 +361,12 @@ function craftItem(itemName) {
     }
 }
 
-// Function to display weapons in the crafting container
-function showWeapons() {
-    const itemsContainer = document.getElementById("items-container");
-    itemsContainer.innerHTML = '';  // Clear the container
   
-    // Loop through all crafting recipes and display only weapons
-    for (let itemName in craftingRecipes) {
-      if (itemName.includes("Sword")) {  // Check if the item is a weapon
-        let recipe = craftingRecipes[itemName];
-        let canCraft = true;
+//   // Event listener for "Weapons" button
+//   document.getElementById('weapons').addEventListener('click', showWeapons);
   
-        // Check if player has required materials
-        for (let material in recipe.materials) {
-          if (inventory[material] < recipe.materials[material]) {
-            canCraft = false;
-            break;
-          }
-        }
-  
-        // Create the UI element for this weapon
-        let itemDiv = document.createElement("div");
-        itemDiv.classList.add("crafting-item");
-  
-        if (canCraft) {
-          itemDiv.innerHTML = `
-            <h3>${itemName}</h3>
-            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
-            <button onclick="craftItem('${itemName}')">Craft ${itemName}</button>
-          `;
-        } else {
-          itemDiv.innerHTML = `
-            <h3>${itemName}</h3>
-            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
-            <button disabled>Can't Craft</button>
-          `;
-        }
-  
-        itemsContainer.appendChild(itemDiv);
-      }
-    }
-  }
-  
-  // Function to display armor in the crafting container
-  function showArmor() {
-    const itemsContainer = document.getElementById("items-container");
-    itemsContainer.innerHTML = '';  // Clear the container
-  
-    // Loop through all crafting recipes and display only armor
-    for (let itemName in craftingRecipes) {
-      if (itemName.includes("Armor")) {  // Check if the item is armor
-        let recipe = craftingRecipes[itemName];
-        let canCraft = true;
-  
-        // Check if player has required materials
-        for (let material in recipe.materials) {
-          if (inventory[material] < recipe.materials[material]) {
-            canCraft = false;
-            break;
-          }
-        }
-  
-        // Create the UI element for this armor
-        let itemDiv = document.createElement("div");
-        itemDiv.classList.add("crafting-item");
-  
-        if (canCraft) {
-          itemDiv.innerHTML = `
-            <h3>${itemName}</h3>
-            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
-            <button onclick="craftItem('${itemName}')">Craft ${itemName}</button>
-          `;
-        } else {
-          itemDiv.innerHTML = `
-            <h3>${itemName}</h3>
-            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
-            <button disabled>Can't Craft</button>
-          `;
-        }
-  
-        itemsContainer.appendChild(itemDiv);
-      }
-    }
-  }
-  
-  // Event listener for "Weapons" button
-  document.getElementById('weapons').addEventListener('click', showWeapons);
-  
-  // Event listener for "Armor" button
-  document.getElementById('armor').addEventListener('click', showArmor);
+//   // Event listener for "Armor" button
+//   document.getElementById('armor').addEventListener('click', showArmor);
 
 
 // Toggling crafting menu
@@ -560,7 +584,7 @@ function selectStarterKit(starter) {
     // Set the equipment based on the selected starter kit
     if (starter === "Knight") {
         equipment = { 
-            weapon: "Basic Sword", 
+            weapon: "Wooden Sword", 
             attack: 5, 
             armor: "Common Clothing", // Start with leather armor
             defense: 0 // Leather Armor provides some defense
@@ -639,9 +663,28 @@ function updateInventory(newLoot = "") {
     for (let item in inventory) {
         let itemDiv = document.createElement("div");
         itemDiv.classList.add("inventory-item");
-        itemDiv.innerHTML = `<span>${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
+        itemDiv.innerHTML = `<span class="equip-link" onclick="tryEquip('${item}')">${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
         inventoryDiv.appendChild(itemDiv);
     }
+}
+
+function tryEquip(itemName) {
+    const recipe = craftingRecipes[itemName];
+    if (!recipe) return;
+
+    if (recipe.attackBoost !== undefined) {
+        equipment.weapon = itemName;
+        equipment.attack = recipe.attackBoost;
+        alert(`${itemName} equipped as your weapon!`);
+    } else if (recipe.defenseBoost !== undefined) {
+        equipment.armor = itemName;
+        equipment.defense = recipe.defenseBoost;
+        alert(`${itemName} equipped as your armor!`);
+    }
+
+    renderEquipmentSlots();
+    updatePlayerStats();
+    saveGameData();
 }
 
 
@@ -803,32 +846,6 @@ document.getElementById("soundToggle").addEventListener("change", function() {
     localStorage.setItem("soundEnabled", this.checked);
 });
 
-// Automatic equip new weapons and armor
-
-function drop(event, slot) {
-    event.preventDefault(); // Prevent the default action
-    let data = event.dataTransfer.getData("text");
-    let draggedItem = document.getElementById(data);
-
-    // Only allow equipment items to be dragged and dropped into equipment slots
-    if (draggedItem && (draggedItem.classList.contains("inventory-item"))) {
-        let itemName = draggedItem.innerText.split(" x")[0]; // Get the item name
-        let itemQuantity = inventory[itemName];
-
-        if (itemQuantity > 0) {
-            // Equip the item to the correct slot (weapon or armor)
-            if (slot === "weapon") {
-                equipment.weapon = itemName; // Equip weapon
-            } else if (slot === "armor") {
-                equipment.armor = itemName; // Equip armor
-            }
-
-            inventory[itemName] -= 1; // Decrease the quantity in inventory
-            updateInventory(); // Update inventory display
-            renderEquipmentSlots(); // Update equipment display
-        }
-    }
-}
 
 // Update HealthBars Tick
 
@@ -916,7 +933,7 @@ function fightMonster() {
         // Check if the monster is defeated
         if (monster.hp === 0) {
             // Display victory message and drop item
-            document.getElementById("message").innerText = `You defeated the ${selectedMonster}!`;
+            document.getElementById("message").innerText = `You defeated ${selectedMonster}!`;
             let drop = monster.drops[Math.floor(Math.random() * monster.drops.length)]; // Random drop from the monster
             if (inventory[drop]) {
                 inventory[drop] += 1; // Increase the count of the drop in inventory
@@ -944,7 +961,7 @@ function fightMonster() {
         // Check if the player is defeated
         if (playerHP <= 0) {
             playerHP = 0; // Ensure HP is set to 0 if the player is defeated
-            document.getElementById("message").innerText = `You were defeated by the ${selectedMonster}!`;
+            document.getElementById("message").innerText = `You were defeated by ${selectedMonster}!`;
 
             // Save the game data after the battle (even if the player loses)
             saveGameData();

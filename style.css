@@ -180,6 +180,13 @@ body {
   backdrop-filter: blur(5px); /* Add blur effect similar to inventory */
 }
 
+#items-container {
+  width: 100%;
+  height: 530px;  /* Adjust as needed */
+  overflow-y: auto;  /* Allows vertical scrolling if the content overflows */
+  /* border: 1px solid #ccc;  Optional: for styling the container */
+}
+
 #craftingInterface h2 {
   font-size: 1.5rem;
   color: white;
