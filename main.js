@@ -1,3 +1,44 @@
+let titleMusic;
+let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
+
+if (isNaN(musicVolume)) {
+  musicVolume = 0.3; // Default to 50% volume on first visit
+  localStorage.setItem("musicVolume", musicVolume);
+}
+
+function setupTitleMusic() {
+    const musicEnabled = localStorage.getItem("musicEnabled") === "true";
+
+    if (musicEnabled) {
+        titleMusic = new Audio("/sounds/titlescreenmusic.mp3");
+        titleMusic.loop = true;
+        titleMusic.volume = musicVolume;
+        titleMusic.play().catch((err) => {
+            console.warn("Title music couldn't auto-play:", err);
+        });
+    }
+}
+
+
+function stopTitleMusic(fadeTime = 2000) {
+    if (!titleMusic) return;
+
+    const fadeSteps = 20;
+    const fadeInterval = fadeTime / fadeSteps;
+    let currentStep = 0;
+
+    const fade = setInterval(() => {
+        currentStep++;
+        titleMusic.volume = Math.max(0, titleMusic.volume - (musicVolume / fadeSteps));
+
+        if (currentStep >= fadeSteps) {
+            clearInterval(fade);
+            titleMusic.pause();
+            titleMusic.currentTime = 0;
+        }
+    }, fadeInterval);
+}
+
 // Global variables and starter kit
 let equipment = {
     weapon: "Wooden Sword",
@@ -29,7 +70,7 @@ let monster = {
 };
 
 // Example of selecting a monster
-let selectedMonster = 0; 
+let selectedMonster = ""; 
 
 let selectedStarter = ""; // Store the selected starter kit
 
@@ -46,45 +87,55 @@ const monsters = {
     // copy pase one of these and change the name, hp, attack and drops
 };
 
+function playSound(soundPath) {
+    const soundEnabled = localStorage.getItem("soundEnabled") === "true";
+    if (!soundEnabled) return;
+
+    const audio = new Audio(soundPath);
+    audio.play();
+}
+// Define a mapping of monsters to their background image and the monster image
+const monsterDataMap = {
+  'Slime': {
+    background: 'url("/images/cave.png")',
+    monsterImage: '/images/slime.png',
+    sound: '/sounds/'
+  },
+  'Wolf': {
+    background: 'url("/images/fantasy-forest.png")',
+    monsterImage: '/images/wolf.png',
+    sound: '/sounds/'
+  },
+  'Goblin': {
+    background: 'url("/images/goblin-camp.png")',
+    monsterImage: '/images/goblin.png',
+    sound: '/sounds/'
+  },
+  'Orc': {
+    background: 'url("/images/orc-camp.png")',
+    monsterImage: '/images/orc.png',
+    sound: '/sounds/'
+  },
+  'Angus': {
+    background: 'url("/images/annesburg.png")',
+    monsterImage: '/images/angus.png',
+    sound: '/sounds/'
+  }
+};
+
 function selectMonster() {
-    // Get the selected monster from the dropdown
-    const selectedMonster = document.getElementById("monsterSelect").value;
-    
-    // Define a mapping of monsters to their background image and the monster image
-    const backgrounds = {
-      'Slime': {
-        background: 'url("/images/cave.png")',
-        monsterImage: '/images/slime.png'
-      },
-      'Wolf': {
-        background: 'url("/images/fantasy-forest.png")',
-        monsterImage: '/images/wolf.png'
-      },
-      'Goblin': {
-        background: 'url("/images/goblin-camp.png")',
-        monsterImage: '/images/goblin.png'
-      },
-      'Orc': {
-        background: 'url("/images/orc-camp.png")',
-        monsterImage: '/images/orc.png'
-      },
-      'Angus': {
-        background: 'url("/images/annesburg.png")',
-        monsterImage: '/images/angus.png'
-      }
-    };
-  
-    // Get the monster data based on selection
-    const monsterData = backgrounds[selectedMonster];
-  
-    // Change the background of the body
+    selectedMonster = document.getElementById("monsterSelect").value;
+    const monsterData = monsterDataMap[selectedMonster];
+
+    // Background & monster image
     document.body.style.backgroundImage = monsterData.background;
     document.body.style.backgroundRepeat = 'no-repeat';
     document.body.style.backgroundSize = 'cover';
-    
-    // Update the monster image in the fight box
     document.querySelector('.monster-image img').src = monsterData.monsterImage;
-  }
+
+    // Sound
+    playSound(monsterData.sound);
+}
 
 //Updating player stats when you add a new weapon or armor dynamically
 function updatePlayerStats() {
@@ -591,6 +642,7 @@ function selectStarterKit(starter) {
         };
     }
 
+
     // Remove the background image after class selection (using JavaScript to remove it)
     document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
 
@@ -605,6 +657,7 @@ function selectStarterKit(starter) {
     renderEquipmentSlots();
     updateInventory();
     selectMonster();
+    stopTitleMusic();
 }
 
 function checkStarterKitSelection() {
@@ -835,7 +888,16 @@ function toggleSettings() {
     // Set the toggle states based on saved settings
     musicToggle.checked = localStorage.getItem("musicEnabled") === "true";
     soundToggle.checked = localStorage.getItem("soundEnabled") === "true";
+    document.getElementById("musicVolume").value = musicVolume;
 }
+
+document.getElementById("musicVolume").addEventListener("input", function () {
+    musicVolume = parseFloat(this.value);
+    localStorage.setItem("musicVolume", musicVolume);
+    if (titleMusic) {
+        titleMusic.volume = musicVolume;
+    }
+});
 
 // Save settings when toggled
 document.getElementById("musicToggle").addEventListener("change", function() {
@@ -1088,6 +1150,7 @@ function loadGameData() {
 window.onload = function() {
     checkStarterKitSelection(); 
     loadGameData(); 
+    setupTitleMusic();
 
     // Restore gathering cooldown
     let savedTime = localStorage.getItem("gatherStartTime");
