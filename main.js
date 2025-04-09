@@ -117,7 +117,7 @@ const monsterDataMap = {
     sound: '/sounds/'
   },
   'Angus': {
-    background: 'url("/images/annesburg.png")',
+    background: 'url("/images/angusfields.png")',
     monsterImage: '/images/angus.png',
     sound: '/sounds/'
   }
