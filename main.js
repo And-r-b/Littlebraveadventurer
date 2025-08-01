@@ -2,7 +2,7 @@ let titleMusic;
 let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
 
 if (isNaN(musicVolume)) {
-  musicVolume = 0.3; // Default to 50% volume on first visit
+  musicVolume = 0.3; 
   localStorage.setItem("musicVolume", musicVolume);
 }
 
@@ -35,6 +35,40 @@ function stopTitleMusic(fadeTime = 2000) {
             clearInterval(fade);
             titleMusic.pause();
             titleMusic.currentTime = 0;
+        }
+    }, fadeInterval);
+}
+
+let gameplayMusic;
+
+function setupGameplayMusic() {
+    const musicEnabled = localStorage.getItem("musicEnabled") === "true";
+
+    if (musicEnabled) {
+        gameplayMusic = new Audio("/sounds/gameplaymusic.mp3"); // put your gameplay music path here
+        gameplayMusic.loop = true;
+        gameplayMusic.volume = musicVolume;
+        gameplayMusic.play().catch((err) => {
+            console.warn("Gameplay music couldn't auto-play:", err);
+        });
+    }
+}
+
+function stopGameplayMusic(fadeTime = 2000) {
+    if (!gameplayMusic) return;
+
+    const fadeSteps = 20;
+    const fadeInterval = fadeTime / fadeSteps;
+    let currentStep = 0;
+
+    const fade = setInterval(() => {
+        currentStep++;
+        gameplayMusic.volume = Math.max(0, gameplayMusic.volume - (musicVolume / fadeSteps));
+
+        if (currentStep >= fadeSteps) {
+            clearInterval(fade);
+            gameplayMusic.pause();
+            gameplayMusic.currentTime = 0;
         }
     }, fadeInterval);
 }
@@ -73,6 +107,7 @@ let monster = {
 let selectedMonster = ""; 
 
 let selectedStarter = ""; // Store the selected starter kit
+
 
 
 // Construct of what monsters that is available
@@ -124,17 +159,28 @@ const monsterDataMap = {
 };
 
 function selectMonster() {
-    selectedMonster = document.getElementById("monsterSelect").value;
-    const monsterData = monsterDataMap[selectedMonster];
+    const selectElement = document.getElementById("monsterSelect");
+    const monsterName = selectElement.value;
 
-    // Background & monster image
-    document.body.style.backgroundImage = monsterData.background;
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundSize = 'cover';
-    document.querySelector('.monster-image img').src = monsterData.monsterImage;
+    if (monsters[monsterName]) {
+        selectedMonster = monsterName;
+        monster.hp = monsters[monsterName].hp;
 
-    // Sound
-    playSound(monsterData.sound);
+        // Update monster HP label and values
+        document.getElementById("monsterHPLabel").textContent = `${monsterName}'s HP`;
+        document.getElementById("monsterHealthText").textContent = monster.hp;
+        document.getElementById("monsterHealth").style.width = "100%";
+
+        // Update background & monster image
+        const monsterData = monsterDataMap[monsterName];
+        document.body.style.backgroundImage = monsterData.background;
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundSize = 'cover';
+        document.querySelector('.monster-image img').src = monsterData.monsterImage;
+
+        // Play monster sound (if available)
+        playSound(monsterData.sound);
+    }
 }
 
 //Updating player stats when you add a new weapon or armor dynamically
@@ -642,7 +688,6 @@ function selectStarterKit(starter) {
         };
     }
 
-
     // Remove the background image after class selection (using JavaScript to remove it)
     document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
 
@@ -657,7 +702,14 @@ function selectStarterKit(starter) {
     renderEquipmentSlots();
     updateInventory();
     selectMonster();
+
+    // Fade out title music first
     stopTitleMusic();
+
+    // Start gameplay music after the fade out is done (fade time + a bit buffer)
+    setTimeout(() => {
+        setupGameplayMusic();
+    }, 2100); // 2100ms = fadeTime (2000ms) + 100ms buffer
 }
 
 function checkStarterKitSelection() {
@@ -790,6 +842,7 @@ window.addEventListener('load', function () {
         document.getElementById('prayCooldown').style.display = 'inline'; // Show cooldown message
         updateCooldownDisplay();
         startCooldown();
+        selectMonster();
     }
 });
 
@@ -1148,9 +1201,21 @@ function loadGameData() {
 
 // Checking onload
 window.onload = function() {
-    checkStarterKitSelection(); 
-    loadGameData(); 
-    setupTitleMusic();
+    checkStarterKitSelection();
+    loadGameData();
+
+    // Check if starter kit already selected in localStorage
+    if (!localStorage.getItem("starterKit")) {
+        // Show starter selection screen and play title music
+        document.getElementById("starterSelection").style.display = "block";
+        document.getElementById("gameContent").style.display = "none";
+        setupTitleMusic();
+    } else {
+        // Starter kit selected, skip title screen, show game directly
+        document.getElementById("starterSelection").style.display = "none";
+        document.getElementById("gameContent").style.display = "block";
+        setupGameplayMusic();
+    }
 
     // Restore gathering cooldown
     let savedTime = localStorage.getItem("gatherStartTime");
