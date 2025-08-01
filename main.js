@@ -1,10 +1,18 @@
 let titleMusic;
 let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
+let sfxVolume = parseFloat(localStorage.getItem("sfxVolume"));
 
 if (isNaN(musicVolume)) {
   musicVolume = 0.3; 
   localStorage.setItem("musicVolume", musicVolume);
 }
+
+if (isNaN(sfxVolume)) {
+  sfxVolume = 0.3; // Default sound effects volume
+  localStorage.setItem("sfxVolume", sfxVolume);
+}
+
+
 
 function setupTitleMusic() {
     const musicEnabled = localStorage.getItem("musicEnabled") === "true";
@@ -127,6 +135,7 @@ function playSound(soundPath) {
     if (!soundEnabled) return;
 
     const audio = new Audio(soundPath);
+    audio.volume = sfxVolume;
     audio.play();
 }
 // Define a mapping of monsters to their background image and the monster image
@@ -134,7 +143,7 @@ const monsterDataMap = {
   'Slime': {
     background: 'url("/images/cave.png")',
     monsterImage: '/images/slime.png',
-    sound: '/sounds/'
+    sound: '/sounds/slime.mp3'
   },
   'Wolf': {
     background: 'url("/images/fantasy-forest.png")',
@@ -937,20 +946,17 @@ function toggleSettings() {
     // Load previously saved settings
     const musicToggle = document.getElementById("musicToggle");
     const soundToggle = document.getElementById("soundToggle");
+    const musicSlider = document.getElementById("musicVolume");
+    const sfxSlider = document.getElementById("sfxVolumeSlider"); // ✅ Added SFX slider
 
-    // Set the toggle states based on saved settings
+    // Set toggle states
     musicToggle.checked = localStorage.getItem("musicEnabled") === "true";
     soundToggle.checked = localStorage.getItem("soundEnabled") === "true";
-    document.getElementById("musicVolume").value = musicVolume;
-}
 
-document.getElementById("musicVolume").addEventListener("input", function () {
-    musicVolume = parseFloat(this.value);
-    localStorage.setItem("musicVolume", musicVolume);
-    if (titleMusic) {
-        titleMusic.volume = musicVolume;
-    }
-});
+    // Set slider positions
+    musicSlider.value = musicVolume;
+    if (sfxSlider) sfxSlider.value = sfxVolume; // ✅ Set SFX slider value
+}
 
 // Save settings when toggled
 document.getElementById("musicToggle").addEventListener("change", function() {
