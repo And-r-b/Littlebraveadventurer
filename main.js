@@ -18,7 +18,7 @@ function setupTitleMusic() {
     const musicEnabled = localStorage.getItem("musicEnabled") === "true";
 
     if (musicEnabled) {
-        titleMusic = new Audio("/sounds/titlescreenmusic.mp3");
+        titleMusic = new Audio("sounds/titlescreenmusic.mp3");
         titleMusic.loop = true;
         titleMusic.volume = musicVolume;
         titleMusic.play().catch((err) => {
@@ -141,29 +141,29 @@ function playSound(soundPath) {
 // Define a mapping of monsters to their background image and the monster image
 const monsterDataMap = {
   'Slime': {
-    background: 'url("/images/cave.png")',
-    monsterImage: '/images/slime.png',
-    sound: '/sounds/slime.mp3'
+    background: 'url("images/cave.png")',
+    monsterImage: 'images/slime.png',
+    sound: 'sounds/slime.mp3'
   },
   'Wolf': {
-    background: 'url("/images/fantasy-forest.png")',
-    monsterImage: '/images/wolf.png',
-    sound: '/sounds/'
+    background: 'url("images/fantasy-forest.png")',
+    monsterImage: 'images/wolf.png',
+    sound: 'sounds/'
   },
   'Goblin': {
-    background: 'url("/images/goblin-camp.png")',
-    monsterImage: '/images/goblin.png',
-    sound: '/sounds/'
+    background: 'url("images/goblin-camp.png")',
+    monsterImage: 'images/goblin.png',
+    sound: 'sounds/'
   },
   'Orc': {
-    background: 'url("/images/orc-camp.png")',
-    monsterImage: '/images/orc.png',
-    sound: '/sounds/'
+    background: 'url("images/orc-camp.png")',
+    monsterImage: 'images/orc.png',
+    sound: 'sounds/'
   },
   'Angus': {
-    background: 'url("/images/angusfields.png")',
-    monsterImage: '/images/angus.png',
-    sound: '/sounds/'
+    background: 'url("images/angusfields.png")',
+    monsterImage: 'images/angus.png',
+    sound: 'sounds/'
   }
 };
 

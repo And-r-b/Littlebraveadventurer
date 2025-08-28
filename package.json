@@ -1,0 +1,61 @@
+{
+  "name": "littlebraveadventurer",
+  "version": "0.5.0",
+  "description": "A Little Brave Adventure Game",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron --no-sandbox .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.littlebraveadventurer.app",
+    "productName": "Little Brave Adventurer",
+    "copyright": "Xray <andreas_rekvikburvald@hotmail.com>",
+    "files": [
+      "**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!node_modules/*/test{,s}/**",
+      "!node_modules/.bin",
+      "!.git/**",
+      "!.vscode/**",
+      "!dist/**"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "icons/png/smallknight.png",
+      "category": "Game"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icons/smallknight.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/smallknight.icns"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/And-r-b/Littlebraveadventurer.git"
+  },
+  "author": {
+    "name": "Xray",
+    "email": "andreas_rekvikburvald@hotmail.com"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/And-r-b/Littlebraveadventurer/issues"
+  },
+  "homepage": "https://github.com/And-r-b/Littlebraveadventurer#readme",
+  "devDependencies": {
+    "electron": "^37.4.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  }
+}

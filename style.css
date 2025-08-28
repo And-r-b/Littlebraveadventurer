@@ -13,7 +13,7 @@ body {
   
   /* Starter Selection */
   #starterSelection {
-    background-image: linear-gradient(rgba(0, 0, 0, 0.301), rgba(0, 0, 0, 0.208)), url("/images/starter-selection.png");
+    background-image: linear-gradient(rgba(0, 0, 0, 0.301), rgba(0, 0, 0, 0.208)), url("images/starter-selection.png");
     background-repeat: no-repeat;
     background-size: cover;
     position: absolute; /* To make sure it stays on top of the background */
