@@ -12,6 +12,10 @@ if (isNaN(sfxVolume)) {
   localStorage.setItem("sfxVolume", sfxVolume);
 }
 
+function asset(relPath) {
+  // resolves against index.html location so "./assets/..." works on Win/Linux
+  return new URL(relPath, window.location.href).toString();
+}
 
 
 function setupTitleMusic() {

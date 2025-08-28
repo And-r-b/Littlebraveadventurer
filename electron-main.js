@@ -1,4 +1,6 @@
 const { app, BrowserWindow } = require('electron');
+// For Dev Testing for sound.
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 const path = require('path');
 
 function createWindow() {
