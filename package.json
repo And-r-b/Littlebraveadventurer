@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron --no-sandbox .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist-all": "electron-builder --linux --win"
   },
   "build": {
     "appId": "com.littlebraveadventurer.app",
