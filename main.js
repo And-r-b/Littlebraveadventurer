@@ -1298,7 +1298,7 @@ window.onload = function() {
             startGatherCooldown(remainingTime);
         } else {
             gatherButton.disabled = false;
-            gatherButton.innerText = "Gather Resource";
+            gatherButton.innerText = "Gather";
         }
     }
 };
