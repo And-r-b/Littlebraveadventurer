@@ -482,6 +482,7 @@ function craftItem(itemName) {
 // Toggling crafting menu
 function toggleCrafting() {
     // Hide other sections
+    document.getElementById('skillsContainer').style.display = 'none';
     document.getElementById('inventoryContainer').style.display = 'none';
     document.getElementById('settingsContainer').style.display = 'none';
     document.getElementById('lootContainer').style.display = 'none';
@@ -809,6 +810,10 @@ function tryEquip(itemName) {
 
 // Toggle Inventory (Make Sure It Opens/Closes)
 function toggleInventory() {
+    document.getElementById('skillsContainer').style.display = 'none';
+    document.getElementById('craftingContainer').style.display = 'none';
+    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('lootContainer').style.display = 'none';
     let inventoryContainer = document.getElementById("inventoryContainer");
     let body = document.body; // Get the body element (or any parent element)
     
@@ -938,39 +943,94 @@ function updateCooldownDisplay() {
     document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`;
 }
 
-// Toggle Settings Buttons
+// ---- Settings: show/hide & UI sync ----
+function syncSettingsUIFromStorage() {
+  const musicToggle = document.getElementById("musicToggle");
+  const soundToggle = document.getElementById("soundToggle");
+  const musicSlider = document.getElementById("musicVolume");
+  const sfxSlider   = document.getElementById("sfxVolume"); // <-- or "sfxVolumeSlider" if you kept that
 
-function toggleSettings() {
-    const settingsContainer = document.getElementById("settingsContainer");
-    if (settingsContainer.style.display === "none") {
-        settingsContainer.style.display = "block"; // Show the container
-    } else {
-        settingsContainer.style.display = "none"; // Hide the container
-    }
+  const musicEnabled = localStorage.getItem("musicEnabled") === "true";
+  const soundEnabled = localStorage.getItem("soundEnabled") === "true";
+  const savedMusicVol = parseFloat(localStorage.getItem("musicVolume") ?? 0.3);
+  const savedSfxVol   = parseFloat(localStorage.getItem("sfxVolume")   ?? 0.3);
 
-    // Load previously saved settings
-    const musicToggle = document.getElementById("musicToggle");
-    const soundToggle = document.getElementById("soundToggle");
-    const musicSlider = document.getElementById("musicVolume");
-    const sfxSlider = document.getElementById("sfxVolumeSlider"); // ✅ Added SFX slider
-
-    // Set toggle states
-    musicToggle.checked = localStorage.getItem("musicEnabled") === "true";
-    soundToggle.checked = localStorage.getItem("soundEnabled") === "true";
-
-    // Set slider positions
-    musicSlider.value = musicVolume;
-    if (sfxSlider) sfxSlider.value = sfxVolume; // ✅ Set SFX slider value
+  musicToggle.checked = musicEnabled;
+  soundToggle.checked = soundEnabled;
+  musicSlider.value = isNaN(savedMusicVol) ? 0.3 : savedMusicVol;
+  sfxSlider.value   = isNaN(savedSfxVol)   ? 0.3 : savedSfxVol;
 }
 
-// Save settings when toggled
-document.getElementById("musicToggle").addEventListener("change", function() {
-    localStorage.setItem("musicEnabled", this.checked);
+function toggleSettings() {
+    document.getElementById('inventoryContainer').style.display = 'none';
+    document.getElementById('craftingContainer').style.display = 'none';
+    document.getElementById('skillsContainer').style.display = 'none';
+    document.getElementById('lootContainer').style.display = 'none';
+  const settingsContainer = document.getElementById("settingsContainer");
+  const opening = settingsContainer.style.display === "none";
+  settingsContainer.style.display = opening ? "block" : "none";
+  if (opening) syncSettingsUIFromStorage(); // refresh UI when opening
+}
+
+// ---- Save toggles ----
+document.getElementById("musicToggle").addEventListener("change", function () {
+  localStorage.setItem("musicEnabled", this.checked);
+  if (this.checked) {
+    // start whichever music should be active
+    if (document.getElementById("gameContent").style.display === "block") {
+      setupGameplayMusic();
+    } else {
+      setupTitleMusic();
+    }
+  } else {
+    stopTitleMusic();
+    stopGameplayMusic();
+  }
 });
 
-document.getElementById("soundToggle").addEventListener("change", function() {
-    localStorage.setItem("soundEnabled", this.checked);
+document.getElementById("soundToggle").addEventListener("change", function () {
+  localStorage.setItem("soundEnabled", this.checked);
 });
+
+// ---- Live volume updates ----
+document.getElementById("musicVolume").addEventListener("input", function () {
+  musicVolume = parseFloat(this.value);
+  localStorage.setItem("musicVolume", musicVolume);
+  if (titleMusic)    titleMusic.volume = musicVolume;
+  if (gameplayMusic) gameplayMusic.volume = musicVolume;
+});
+
+document.getElementById("sfxVolume").addEventListener("input", function () {
+  sfxVolume = parseFloat(this.value);
+  localStorage.setItem("sfxVolume", sfxVolume);
+});
+
+
+function closeSettings() {
+  const settingsContainer = document.getElementById("settingsContainer");
+  const overlay = document.getElementById("settingsOverlay");
+  settingsContainer.style.display = "none";
+  if (overlay) overlay.style.display = "none";
+}
+
+function openSettings() {
+  const settingsContainer = document.getElementById("settingsContainer");
+  const overlay = document.getElementById("settingsOverlay");
+  settingsContainer.style.display = "block";
+  if (overlay) overlay.style.display = "block";
+  // if you use sync-on-open:
+  if (typeof syncSettingsUIFromStorage === "function") {
+    syncSettingsUIFromStorage();
+  }
+}
+
+document.getElementById("settingsCloseBtn").addEventListener("click", closeSettings);
+
+// Esc to close
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeSettings();
+});
+
 
 
 // Update HealthBars Tick

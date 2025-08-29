@@ -315,6 +315,7 @@ body {
 }
 
 #settingsContainer {
+  position: relative;
   background-color: rgb(15, 14, 14);
   padding:10px;
   border-radius: 10px; /* Smooth rounded corners */
@@ -325,6 +326,23 @@ body {
   height: fit-content;
   font-family: Arial, sans-serif; /* Clean font */
 }
+
+#settingsCloseBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #fff;
+  font-size: 18px;
+  line-height: 36px;
+  cursor: pointer;
+  opacity: 0.9;
+}
+#settingsCloseBtn:hover { opacity: 1; }
 
 /* Setting Item styling */
 .setting-item {
