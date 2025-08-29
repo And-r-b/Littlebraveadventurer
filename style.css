@@ -25,6 +25,8 @@ h1{
 
 /* General Styles */
 body {
+    overflow-x: hidden;
+    overflow-y: hidden;
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: center;
     background-color: #04360fd8;
