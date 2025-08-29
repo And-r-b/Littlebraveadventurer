@@ -546,6 +546,7 @@ function renderCraftingUI() {
 
 let gatherCooldown = 600; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
+let gatherLabel  = gatherButton.querySelector(".label");
 let messageElement = document.getElementById("message");
 
 // Function to start the cooldown and delay item rewards
@@ -559,7 +560,7 @@ function startGatherCooldown(remainingTime) {
         if (remainingTime <= 0) {
             clearInterval(countdown);
             gatherButton.disabled = false;
-            gatherButton.innerText = "Gather Resource";
+            gatherLabel.textContent = "Gather";
             giveGatherReward();
             localStorage.removeItem("gatherStartTime"); // Clear saved time
         } else {
@@ -573,7 +574,7 @@ function startGatherCooldown(remainingTime) {
 
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
-            gatherButton.innerText = `Gathering... (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
+            gatherLabel.textContent = `Gathering (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
         }
     }, 1000);
 }

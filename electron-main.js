@@ -11,7 +11,7 @@ function createWindow() {
       contextIsolation: true,
       devTools: false
     },
-    icon: path.join(__dirname, 'icons', 'png', 'smallknight.png')
+    icon: path.join(__dirname, 'icons', 'smallknight.ico')
   });
 
   win.webContents.on('devtools-opened', () => win.webContents.closeDevTools());

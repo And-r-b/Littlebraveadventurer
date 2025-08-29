@@ -1,3 +1,28 @@
+:root{
+  --app-max-w: 1100px;   /* overall page width */
+  --arena-h: 72vh;       /* total fight area height */
+  --sprite-h: 52vh;      /* max sprite height inside arena */
+}
+
+/* Center the whole game content */
+#gameContent{
+  max-width: var(--app-max-w);
+  margin: 0 auto;
+  padding: 8px 16px;
+}
+
+h1{
+  font-size: clamp(20px, 3.2vw, 34px);
+  margin: 12px 0 6px;
+}
+
+#gameContent p,
+#gameContent .subtitle,
+#gameContent .class-info{
+  margin: 4px 0;
+}
+
+
 /* General Styles */
 body {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -49,6 +74,36 @@ body {
   font-size: 1.2rem;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Even, responsive toolbar for Inventory / Skills / Gather / Craft / Settings */
+.button-row{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* equal widths */
+  gap: 12px;                     /* the ONLY spacing */
+  max-width: 780px;              /* keep it compact under the title */
+  margin: 10px auto 16px;        /* centered row */
+  align-items: stretch;
+}
+
+.button-row > button{
+  width: 100%;                   /* fill their grid cell */
+  margin: 0;                     /* kill random gaps from old styles */
+  box-sizing: border-box;
+  min-height: 40px;              /* consistent height */
+}
+
+/* Make the gather button match the others (including when disabled) */
+.button-row #gatherButton{
+  /* inherits same sizing; ensure disabled state doesn’t shift */
+  min-width: 0;
+}
+
+.button-row button img {
+  width: 40px;
+  height: 40px;
+  margin-right: 6px;
+  vertical-align: middle;
 }
   
   /* Fight Button (above fight container) */
@@ -352,6 +407,16 @@ body {
   font-size: 1.2rem;
   margin-left: auto;
   margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+}
+
+#gatherButton .btn-icon {
+  width: 40px;
+  height: 40px;
 }
 
 #gatherButton:hover {
@@ -408,14 +473,16 @@ body {
 }
 
   
-  /* Fight Container Column */
-  .fight-container {
-    width: calc(70% - 320px); /* Adjust width based on the Skills container width */
-    height: fit-content;
-    background-color: #333;
-    border-radius: 10px;
-    transition: width 0.5s ease-in-out;
-}
+/* Contain the fight area so the page never needs to scroll */
+.fight-container{
+  max-height: var(--arena-h);
+  overflow: hidden;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.35);       /* subtle card look on top of bg */
+  backdrop-filter: blur(2px);
+  box-sizing: border-box;
+  }
   
   /* Health Bars Container (within Fight Container) */
   .health-bars {
@@ -433,6 +500,10 @@ body {
     flex-direction: column;
     align-items: center;
   }
+
+ /* Health bars & controls don’t expand vertically */
+  .health-bar-container,
+  .controls{ flex: 0 0 auto; }
   
   /* Align Player HP bar to the left */
   .player-side {
@@ -482,21 +553,52 @@ body {
     top: 50%;
 }
   
-  /* Fight Box for Images */
-  .fight-box {
-    display: flex;
-    justify-content: space-between;
+/* Two equal columns for player/monster */
+  .fight-box{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     align-items: center;
+    min-height: 0; /* lets kids actually shrink */
   }
   
   .fight-image {
-    width: 45%;
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .fight-image img {
-    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 60vh;
+    object-fit: contain;
     border-radius: 10px;
   }
+
+/* Keep both image panes same size, center the art */
+.player-image,
+.monster-image{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 3/4;          /* consistent “card” shape; tweak if you like */
+  overflow: hidden;
+}
+
+/* Sprites scale down, never push layout bigger */
+.player-image img,
+.monster-image img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: var(--sprite-h);
+  object-fit: contain;
+}
   
   .inventory-hidden {
     transform: translateX(-100%);
@@ -505,4 +607,14 @@ body {
 /* Expand Fight Box When Inventory is Hidden */
 .fight-expanded {
     width: 100%;
+}
+
+.btn-icon{ width:20px; height:20px; margin-right:6px; vertical-align:middle; }
+#gatherButton .label{ vertical-align:middle; }
+
+@media (max-height: 720px){
+  :root{
+    --arena-h: 68vh;
+    --sprite-h: 48vh;
+  }
 }
