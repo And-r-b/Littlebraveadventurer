@@ -196,6 +196,23 @@ function selectMonster() {
     }
 }
 
+const fsBtn = document.getElementById('fullscreenToggle');
+if (fsBtn) {
+  // set initial label based on current state
+  window.electronAPI.getFullScreenState().then(isFull => {
+    fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
+  });
+
+  fsBtn.addEventListener('click', async () => {
+    const isFull = await window.electronAPI.toggleFullScreen();
+    fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
+  });
+}
+
+document.getElementById("quitGameButton").addEventListener("click", () => {
+  window.electronAPI.quitApp();
+});
+
 //Updating player stats when you add a new weapon or armor dynamically
 function updatePlayerStats() {
     document.getElementById("playerAttack").innerText = equipment.attack;
