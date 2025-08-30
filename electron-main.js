@@ -18,7 +18,7 @@ function createWindow() {
       devTools: false,
       preload: path.join(__dirname, 'preload.js') // <-- add this
     },
-    icon: path.join(__dirname, 'icons', 'png', 'logo.png')
+    icon: path.join(__dirname, 'icons', 'smallknight.ico')
   });
 
   win.loadFile('index.html');
