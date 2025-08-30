@@ -22,6 +22,10 @@ h1{
   margin: 4px 0;
 }
 
+#gameLogo {
+  max-width: 500px;
+  height: auto;
+}
 
 /* General Styles */
 body {
