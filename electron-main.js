@@ -75,6 +75,16 @@ ipcMain.handle('save:write', async (_evt, saveObj) => {
   }
 });
 
+ipcMain.handle('save:clear', async () => {
+  try {
+    if (fs.existsSync(SAVE_FILE)) fs.unlinkSync(SAVE_FILE);
+    return { ok: true };
+  } catch (e) {
+    console.error('clear save failed', e);
+    return { ok: false, error: String(e) };
+  }
+});
+
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });

@@ -3,7 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('saveAPI', {
   load: () => ipcRenderer.invoke('save:read'),
-  save: (data) => ipcRenderer.invoke('save:write', data),
+  save:  (data) => ipcRenderer.invoke('save:write', data),
+  clear: () => ipcRenderer.invoke('save:clear')   // <—
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {

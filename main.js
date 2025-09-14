@@ -1291,11 +1291,20 @@ function fightMonster() {
 
 // Reset button to start new game - Pop Alert
 
-function startNewGame() {
-    // Clear all saved data from localStorage
+async function startNewGame() {
+    if (!confirm("Reset all progress and start a new game?")) return;
+
+    // 1) Wipe legacy storage FIRST (what your UI reads)
     localStorage.clear();
 
-    // Reset player stats to default values
+    // 2) Wipe the cloud-synced save file (requires preload saveAPI.clear)
+    try {
+        await window.saveAPI?.clear?.();
+    } catch (e) {
+        console.warn("Could not clear save file:", e);
+    }
+
+    // 3) Reset player stats to default values
     playerHP = 100;
     inventory = {
         "Iron Ore": 0,
@@ -1310,38 +1319,45 @@ function startNewGame() {
         defense: 0
     };
 
-    //  Reset Pray Cooldown Variables
+    // 4) Reset Pray Cooldown Variables
     prayCooldownActive = false;
     prayCooldownTime = initialPrayCooldownTime;
-    localStorage.removeItem("prayStartTime");  // Remove cooldown start time
-    localStorage.removeItem("prayCooldownTime"); // Remove stored cooldown time
-    localStorage.removeItem("prayCooldownActive"); // Remove stored cooldown state
+    localStorage.removeItem("prayStartTime");
+    localStorage.removeItem("prayCooldownTime");
+    localStorage.removeItem("prayCooldownActive");
 
-    //  Reset Pray Button UI
-    document.getElementById('prayButton').disabled = false;
-    document.getElementById('prayButton').textContent = "Pray"; // Reset button text
-    document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
+    // 5) Reset Pray Button UI (guard against nulls)
+    const prayBtn = document.getElementById('prayButton');
+    if (prayBtn) {
+        prayBtn.disabled = false;
+        prayBtn.textContent = "Pray";
+    }
+    const prayCd = document.getElementById('prayCooldown');
+    if (prayCd) prayCd.style.display = 'none';
 
-    // Hide game content and show starter selection screen
-    document.getElementById("gameContent").style.display = "none";
-    document.getElementById("starterSelection").style.display = "block";
+    // 6) Hide game content and show starter selection screen
+    const game = document.getElementById("gameContent");
+    if (game) game.style.display = "none";
+    const starterSel = document.getElementById("starterSelection");
+    if (starterSel) starterSel.style.display = "block";
 
-    // Remove starter kit from localStorage to allow re-selection
+    // 7) Ensure re-selection of starter
     localStorage.removeItem("starterKit");
 
-    // Optionally reset settings (e.g., reset music and sound preferences)
+    // 8) Default settings ON so they don’t appear “ticked off”
     localStorage.setItem("musicEnabled", "true");
     localStorage.setItem("soundEnabled", "true");
+    localStorage.setItem("musicVolume", "0.3");
+    localStorage.setItem("sfxVolume", "0.3");
+    const musicToggle = document.getElementById("musicToggle");
+    if (musicToggle) musicToggle.checked = true;
+    const soundToggle = document.getElementById("soundToggle");
+    if (soundToggle) soundToggle.checked = true;
 
-    // Reset the UI for music and sound settings
-    document.getElementById("musicToggle").checked = true;
-    document.getElementById("soundToggle").checked = true;
-
-    // Alert the player that the game has been reset
     alert("The game has been reset! Choose your starter kit to begin.");
 
-    // Directly reload the page by setting location.href
-    location.href = location.href;  // Reloads the page
+    // 9) Reload LAST (after the file is cleared) so initSaves() can’t restore the old save
+    location.href = location.href;
 }
 
 
