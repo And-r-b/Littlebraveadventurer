@@ -1,11 +1,13 @@
 // electron-main.js
 const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron'); // <-- add ipcMain + globalShortcut
 const path = require('path');
+const fs = require('fs');
 
 // For Dev Testing for sound.
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
 let win;
+const SAVE_FILE = path.join(app.getPath('userData'), 'save.json');
 
 function createWindow() {
   win = new BrowserWindow({
@@ -49,6 +51,28 @@ ipcMain.handle('get-fullscreen-state', (event) => {
 
 ipcMain.handle("quit-app", () => {
   app.quit();
+});
+
+ipcMain.handle('save:read', async () => {
+  try {
+    if (!fs.existsSync(SAVE_FILE)) return null;
+    const raw = fs.readFileSync(SAVE_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('read save failed', e);
+    return null;
+  }
+});
+
+ipcMain.handle('save:write', async (_evt, saveObj) => {
+  try {
+    fs.mkdirSync(path.dirname(SAVE_FILE), { recursive: true });
+    fs.writeFileSync(SAVE_FILE, JSON.stringify(saveObj, null, 2), 'utf-8');
+    return { ok: true };
+  } catch (e) {
+    console.error('write save failed', e);
+    return { ok: false, error: String(e) };
+  }
 });
 
 app.on('will-quit', () => {

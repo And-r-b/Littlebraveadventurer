@@ -2,6 +2,22 @@ let titleMusic;
 let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
 let sfxVolume = parseFloat(localStorage.getItem("sfxVolume"));
 
+// --- Steam Cloud–ready save schema ---
+function buildSaveFromCurrentState() {
+  return {
+    version: 1,
+    starterKit: localStorage.getItem("starterKit") || '',
+    playerHP,
+    equipment,
+    inventory,
+    settings: {
+      musicEnabled: localStorage.getItem("musicEnabled") === "true",
+      soundEnabled: localStorage.getItem("soundEnabled") === "true",
+      musicVolume: parseFloat(localStorage.getItem("musicVolume")) || 0.3,
+      sfxVolume: parseFloat(localStorage.getItem("sfxVolume")) || 0.3
+    }
+  };
+}
 if (isNaN(musicVolume)) {
   musicVolume = 0.3; 
   localStorage.setItem("musicVolume", musicVolume);
@@ -1330,10 +1346,64 @@ function startNewGame() {
 
 
 // Function to save game data to localStorage
-function saveGameData() {
-    localStorage.setItem("playerHP", playerHP);
-    localStorage.setItem("inventory", JSON.stringify(inventory));
-    localStorage.setItem("equipment", JSON.stringify(equipment));
+async function saveGameData() {
+  // Keep old localStorage path working
+  localStorage.setItem("playerHP", playerHP);
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  localStorage.setItem("equipment", JSON.stringify(equipment));
+
+  // Also write a full save file for Steam Cloud
+  const save = {
+    version: 1,
+    starterKit: localStorage.getItem("starterKit") || '',
+    playerHP,
+    equipment,
+    inventory,
+    settings: {
+      musicEnabled: localStorage.getItem("musicEnabled") === "true",
+      soundEnabled: localStorage.getItem("soundEnabled") === "true",
+      musicVolume: parseFloat(localStorage.getItem("musicVolume")) || 0.3,
+      sfxVolume: parseFloat(localStorage.getItem("sfxVolume")) || 0.3
+    }
+  };
+
+  if (window.saveAPI?.save) await window.saveAPI.save(save);
+}
+
+window.addEventListener('load', initSaves);
+
+async function initSaves() {
+  try {
+    const fileSave = await window.saveAPI?.load?.();
+    if (fileSave) {
+      // hydrate localStorage so your old code still works
+      localStorage.setItem("starterKit", fileSave.starterKit || '');
+      localStorage.setItem("playerHP", String(fileSave.playerHP ?? 100));
+      localStorage.setItem("inventory", JSON.stringify(fileSave.inventory || {}));
+      localStorage.setItem("equipment", JSON.stringify(fileSave.equipment || {}));
+
+      const s = fileSave.settings || {};
+      localStorage.setItem("musicEnabled", String(!!s.musicEnabled));
+      localStorage.setItem("soundEnabled", String(!!s.soundEnabled));
+      localStorage.setItem("musicVolume", String(s.musicVolume ?? 0.3));
+      localStorage.setItem("sfxVolume", String(s.sfxVolume ?? 0.3));
+
+      // hydrate globals
+      playerHP = fileSave.playerHP ?? 100;
+      equipment = fileSave.equipment || equipment;
+      inventory = fileSave.inventory || inventory;
+    } else {
+      // first run → migrate current localStorage
+      await saveGameData();
+    }
+  } catch (e) {
+    console.warn("initSaves failed, fallback to localStorage only:", e);
+  }
+
+  // kick off your normal startup
+  checkStarterKitSelection();
+  updateInventoryDisplay();
+  selectMonster();
 }
 
 
