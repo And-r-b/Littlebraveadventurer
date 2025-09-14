@@ -636,6 +636,68 @@ body {
 .btn-icon{ width:20px; height:20px; margin-right:6px; vertical-align:middle; }
 #gatherButton .label{ vertical-align:middle; }
 
+/* Fullscreen black overlay for crossfades */
+#transitionOverlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;                 /* invisible by default */
+  pointer-events: none;
+  transition: opacity 600ms ease;
+  z-index: 9999;              /* above everything */
+}
+
+/* When active, we cover the screen (fade to black) */
+#transitionOverlay.cover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Backdrop covers screen but doesn't shift layout */
+#modalBackdrop[hidden] { display: none; }
+#modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+/* Settings modal centered and overlayed */
+#settingsContainer[hidden] { display: none !important; }
+#settingsContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);  /* true center */
+  max-width: 720px;
+  width: min(90vw, 720px);
+  max-height: 85vh;
+  overflow: auto;
+
+  background: #1d2330;
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  z-index: 1001; /* above backdrop */
+}
+
+/* Optional: close button in the corner */
+#settingsCloseBtn {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #fff;
+}
+
+/* Prevent page scroll when modal open (toggle .modal-open on body) */
+body.modal-open {
+  overflow: hidden;
+}
+
 @media (max-height: 720px){
   :root{
     --arena-h: 68vh;

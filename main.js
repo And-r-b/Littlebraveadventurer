@@ -85,6 +85,80 @@ function stopGameplayMusic(fadeTime = 2000) {
     }, fadeInterval);
 }
 
+// IDs you already use (adjust if yours differ)
+const START_ID = 'startSelection';  // your start/menu container
+const GAME_ID  = 'gameContent';   // your main game container
+
+function $(id){ return document.getElementById(id); }
+
+function show(el){ el.style.display = ''; }
+function hide(el){ el.style.display = 'none'; }
+
+/** Crossfade: fade to black, swap screens, fade back in */
+function crossfadeSwap(swapFn) {
+  const overlay = document.getElementById('transitionOverlay');
+  overlay.hidden = false;          // make it participate in layout
+
+  // Force a reflow so the browser acknowledges opacity: 0 first
+  // (this ensures the next class change will animate)
+  void overlay.offsetHeight;
+
+  // Now we can fade to black
+  overlay.classList.add('cover');
+
+  const onFadeToBlack = () => {
+    overlay.removeEventListener('transitionend', onFadeToBlack);
+
+    // Do the screen swap while it's black
+    swapFn();
+
+    // Next frame: fade back in
+    requestAnimationFrame(() => {
+      overlay.classList.remove('cover');
+
+      overlay.addEventListener('transitionend', () => {
+        overlay.hidden = true;     // cleanup
+      }, { once: true });
+    });
+  };
+
+  overlay.addEventListener('transitionend', onFadeToBlack, { once: true });
+}
+
+/** Call this once when a *new* player starts the game */
+window.addEventListener('load', () => {
+  const hasPlayed = localStorage.getItem('hasPlayed') === '1';
+  if (hasPlayed) {
+    // Double RAF guarantees at least one paint before we start fading
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        enterGameWithTransition(); // uses crossfadeSwap inside
+      });
+    });
+  }
+});
+
+/** Enter the game view with a smooth transition */
+function enterGameWithTransition() {
+  crossfadeSwap(() => {
+    hide($(START_ID));
+    show($(GAME_ID));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hasPlayed = localStorage.getItem('hasPlayed') === '1';
+  if (hasPlayed) {
+    // Skip start/menu and crossfade straight into game
+    enterGameWithTransition();
+  }
+});
+
+function onStartNewGameClick() {
+  markHasPlayed();            // remember this player next time
+  enterGameWithTransition();  // smooth transition right now too
+}
+
 // Global variables and starter kit
 let equipment = {
     weapon: "Wooden Sword",
@@ -724,8 +798,10 @@ function selectStarterKit(starter) {
     document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
 
     // Hide the starter selection screen and show the game content
-    document.getElementById("starterSelection").style.display = "none";
-    document.getElementById("gameContent").style.display = "block";
+    crossfadeSwap(() => {
+        document.getElementById("starterSelection").style.display = "none";
+        document.getElementById("gameContent").style.display = "block";
+    });
 
     // Set the selected monster (Slime) as default
     document.getElementById("monsterSelect").value = selectedMonster;
@@ -979,15 +1055,26 @@ function syncSettingsUIFromStorage() {
 }
 
 function toggleSettings() {
-    document.getElementById('inventoryContainer').style.display = 'none';
-    document.getElementById('craftingContainer').style.display = 'none';
-    document.getElementById('skillsContainer').style.display = 'none';
-    document.getElementById('lootContainer').style.display = 'none';
+  // Hide other containers
+  document.getElementById('inventoryContainer').style.display = 'none';
+  document.getElementById('craftingContainer').style.display = 'none';
+  document.getElementById('skillsContainer').style.display = 'none';
+  document.getElementById('lootContainer').style.display = 'none';
+
   const settingsContainer = document.getElementById("settingsContainer");
-  const opening = settingsContainer.style.display === "none";
+  const opening = settingsContainer.style.display === "none" || settingsContainer.style.display === "";
   settingsContainer.style.display = opening ? "block" : "none";
-  if (opening) syncSettingsUIFromStorage(); // refresh UI when opening
+
+  if (opening) {
+    syncSettingsUIFromStorage(); // refresh UI when opening
+  }
 }
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    toggleSettings();
+  }
+});
 
 // ---- Save toggles ----
 document.getElementById("musicToggle").addEventListener("change", function () {
@@ -1286,6 +1373,62 @@ function loadGameData() {
     renderEquipmentSlots();      // Update the equipment slots (weapon + armor)
     updateHealthBars(playerHP);  // Update the player's health bar
 }
+
+// ------- Settings modal helpers -------
+const settingsEl = document.getElementById("settingsContainer");
+const othersToHide = [
+  "inventoryContainer",
+  "craftingContainer",
+  "skillsContainer",
+  "lootContainer",
+];
+
+function isHidden(el) {
+  // works whether you hide via [hidden], CSS, or inline style
+  return el.hasAttribute("hidden") || getComputedStyle(el).display === "none";
+}
+
+function openSettings() {
+  othersToHide.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+
+  settingsEl.removeAttribute("hidden");         // preferred
+  settingsEl.style.display = "block";           // also set display for legacy code
+  if (typeof syncSettingsUIFromStorage === "function") {
+    syncSettingsUIFromStorage();
+  }
+}
+
+function closeSettings() {
+  settingsEl.setAttribute("hidden", "");
+  settingsEl.style.display = "none";
+}
+
+function toggleSettings() {
+  isHidden(settingsEl) ? openSettings() : closeSettings();
+}
+
+// Make it callable from your button's onclick="toggleSettings()"
+window.toggleSettings = toggleSettings;
+
+// ESC works both to open and close
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+
+  if (isSettingsOpen()) {
+    // ESC closes if open
+    closeSettings();
+  } else {
+    // ESC opens if closed
+    openSettings();
+  }
+
+  // prevent other game handlers from re-triggering or overriding this
+  e.preventDefault();
+  e.stopPropagation();
+});
 
 // Checking onload
 window.onload = function() {
