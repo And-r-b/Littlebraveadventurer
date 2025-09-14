@@ -3,7 +3,7 @@ let steamClient = null;
 try {
   const steamworks = require('steamworks.js');
   // During dev you can use 480 (Spacewar) or your real AppID if you run via Steam
-  steamClient = steamworks.init(480);
+  steamClient = require('steamworks.js').init(3997430);
   console.log('[Steam] Logged in as:', steamClient.localplayer.getName());
 } catch (e) {
   console.warn('[Steam] Steam not initialized:', e?.message || e);

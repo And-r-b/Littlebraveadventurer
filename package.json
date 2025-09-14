@@ -22,6 +22,9 @@
       "!.vscode/**",
       "!dist/**"
     ],
+    "asarUnpack": [
+      "node_modules/steamworks.js/**/*"
+    ],
     "extraResources": [
       {
         "from": "node_modules/steamworks.js/sdk/redistributable_bin/win64/steam_api64.dll",
