@@ -1,6 +1,7 @@
 let titleMusic;
 let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
 let sfxVolume = parseFloat(localStorage.getItem("sfxVolume"));
+let hasSelectedStarter = !!localStorage.getItem('starterKit');
 
 // --- Steam Cloud–ready save schema ---
 function buildSaveFromCurrentState() {
@@ -225,6 +226,7 @@ const monsters = {
 };
 
 function playSound(soundPath) {
+    if (!hasSelectedStarter) return; // <-- block SFX until class chosen
     const soundEnabled = localStorage.getItem("soundEnabled") === "true";
     if (!soundEnabled) return;
 
@@ -794,6 +796,7 @@ function cleanupInventory() {
 function selectStarterKit(starter) {
     // Store the selected starter in localStorage
     localStorage.setItem("starterKit", starter);
+    hasSelectedStarter = true;  
 
     // Store the selected starter in the global variable
     selectedStarter = starter;
@@ -1296,6 +1299,9 @@ async function startNewGame() {
 
     // 1) Wipe legacy storage FIRST (what your UI reads)
     localStorage.clear();
+
+    hasSelectedStarter = false;
+    try { if (window.monsterAudio) { monsterAudio.pause(); monsterAudio.currentTime = 0; } } catch(_) {}
 
     // 2) Wipe the cloud-synced save file (requires preload saveAPI.clear)
     try {
