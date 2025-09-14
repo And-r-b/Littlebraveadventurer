@@ -1,7 +1,29 @@
+// ===== STEAM INIT =====
+let steamClient = null;
+try {
+  const steamworks = require('steamworks.js');
+  // During dev you can use 480 (Spacewar) or your real AppID if you run via Steam
+  steamClient = steamworks.init(480);
+  console.log('[Steam] Logged in as:', steamClient.localplayer.getName());
+} catch (e) {
+  console.warn('[Steam] Steam not initialized:', e?.message || e);
+}
+
+// Small helper to unlock an achievement safely
+function unlockAchievement(apiName) {
+  if (!steamClient) return false;
+  const ok = steamClient.achievement.activate(apiName);
+  if (steamClient.achievement.store) steamClient.achievement.store();
+  return ok;
+}
+
+
 let titleMusic;
 let musicVolume = parseFloat(localStorage.getItem("musicVolume"));
 let sfxVolume = parseFloat(localStorage.getItem("sfxVolume"));
 let hasSelectedStarter = !!localStorage.getItem('starterKit');
+
+
 
 // --- Steam Cloud–ready save schema ---
 function buildSaveFromCurrentState() {
@@ -19,6 +41,8 @@ function buildSaveFromCurrentState() {
     }
   };
 }
+
+
 if (isNaN(musicVolume)) {
   musicVolume = 0.3; 
   localStorage.setItem("musicVolume", musicVolume);
@@ -580,13 +604,6 @@ function craftItem(itemName) {
     }
 }
 
-  
-//   // Event listener for "Weapons" button
-//   document.getElementById('weapons').addEventListener('click', showWeapons);
-  
-//   // Event listener for "Armor" button
-//   document.getElementById('armor').addEventListener('click', showArmor);
-
 
 // Toggling crafting menu
 function toggleCrafting() {
@@ -837,6 +854,8 @@ function selectStarterKit(starter) {
     setTimeout(() => {
         setupGameplayMusic();
     }, 2100); // 2100ms = fadeTime (2000ms) + 100ms buffer
+
+    unlockAchievement('ACH_CHOSE_STARTER')
 }
 
 function checkStarterKitSelection() {
@@ -1256,6 +1275,8 @@ function fightMonster() {
 
             // Stop the battle once the monster is defeated
             clearInterval(battleInterval);
+
+            awardKillAchievements(selectMonster);
             return; // Exit the interval callback function
         }
 
@@ -1290,6 +1311,26 @@ function fightMonster() {
 
     // Hide "Fight Monster" button
     document.querySelector("button[onclick='fightMonster()']").style.display = "none";
+}
+
+function awardKillAchievements(monsterType) {
+  switch (monsterType) {
+    case 'Slime':
+      unlockAchievement('ACH_FIRST_SLIME');
+      break;
+    case 'Wolf':
+      unlockAchievement('ACH_FIRST_WOLF');
+      break;
+    case 'Goblin':
+      unlockAchievement('ACH_FIRST_GOBLIN');
+      break;
+    case 'Orc':
+      unlockAchievement('ACH_FIRST_ORC');
+      break;
+    case 'Angus': // boss
+      unlockAchievement('ACH_ANGUS_SLAYER');
+      break;
+  }
 }
 
 // Reset button to start new game - Pop Alert
@@ -1520,6 +1561,27 @@ document.addEventListener("keydown", (e) => {
   // prevent other game handlers from re-triggering or overriding this
   e.preventDefault();
   e.stopPropagation();
+});
+
+// Make functions visible to inline HTML event handlers
+Object.assign(window, {
+  selectStarterKit,
+  fightMonster,
+  toggleInventory,
+  toggleCrafting,
+  toggleSkills,
+  gatherResource,
+  tryEquip,
+  usePray,
+  startNewGame,
+  toggleSettings,
+  renderCraftingUI,
+  craftItem,
+  selectedMonster,
+  buildSaveFromCurrentState,
+  gatherableResources,
+  selectedStarter,
+  onStartNewGameClick
 });
 
 // Checking onload

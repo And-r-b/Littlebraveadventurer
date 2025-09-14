@@ -18,12 +18,15 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       devTools: false,
+      nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js') // <-- add this
     },
     icon: path.join(__dirname, 'icons', 'smallknight.ico')
   });
 
   win.loadFile('index.html');
+
+  require('steamworks.js').electronEnableSteamOverlay(); // call near the bottom of this file
 }
 
 app.whenReady().then(() => {

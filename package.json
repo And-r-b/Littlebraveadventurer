@@ -22,6 +22,20 @@
       "!.vscode/**",
       "!dist/**"
     ],
+    "extraResources": [
+      {
+        "from": "node_modules/steamworks.js/sdk/redistributable_bin/win64/steam_api64.dll",
+        "to": "steam_api64.dll"
+      },
+      {
+        "from": "node_modules/steamworks.js/sdk/redistributable_bin/linux64/libsteam_api.so",
+        "to": "libsteam_api.so"
+      },
+      {
+        "from": "node_modules/steamworks.js/sdk/redistributable_bin/osx/libsteam_api.dylib",
+        "to": "libsteam_api.dylib"
+      }
+    ],
     "linux": {
       "target": [
         "AppImage",
@@ -55,5 +69,8 @@
   "devDependencies": {
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "steamworks.js": "^0.4.0"
   }
 }
