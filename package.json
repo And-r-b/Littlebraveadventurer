@@ -22,40 +22,44 @@
       "!.vscode/**",
       "!dist/**"
     ],
-    "asarUnpack": [
-      "node_modules/steamworks.js/**/*"
-    ],
+   "asarUnpack": [
+    "node_modules/steamworks.js/**/*"
+  ],
+
+  "win": {
+    "target": "nsis",
+    "icon": "icons/smallknight.ico",
     "extraResources": [
       {
-        "from": "node_modules/steamworks.js/sdk/redistributable_bin/win64/steam_api64.dll",
-        "to": "steam_api64.dll"
-      },
-      {
-        "from": "node_modules/steamworks.js/sdk/redistributable_bin/linux64/libsteam_api.so",
-        "to": "libsteam_api.so"
-      },
-      {
-        "from": "node_modules/steamworks.js/sdk/redistributable_bin/osx/libsteam_api.dylib",
-        "to": "libsteam_api.dylib"
+        "from": "node_modules/steamworks.js/bin/win64/steam_api64.dll",
+        "to": "."
       }
-    ],
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "icon": "icons/png/smallknight.png",
-      "category": "Game"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "icons/smallknight.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "icons/smallknight.icns"
-    }
+    ]
   },
+
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "icon": "icons/png/smallknight.png",
+    "category": "Game",
+    "extraResources": [
+      {
+        "from": "node_modules/steamworks.js/bin/linux64/libsteam_api.so",
+        "to": "."
+      }
+    ]
+  },
+
+  "mac": {
+    "target": "dmg",
+    "icon": "icons/smallknight.icns",
+    "extraResources": [
+      {
+        "from": "node_modules/steamworks.js/bin/osx/libsteam_api.dylib",
+        "to": "."
+      }
+    ]
+  }
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/And-r-b/Littlebraveadventurer.git"
