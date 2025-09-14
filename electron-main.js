@@ -24,7 +24,7 @@ function createWindow() {
     fullscreenable: true,
     autoHideMenuBar: true,
     webPreferences: {
-      contextIsolation: true,
+      contextIsolation: false,
       devTools: false,
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js') // <-- add this
