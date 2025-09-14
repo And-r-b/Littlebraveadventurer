@@ -1564,27 +1564,6 @@ document.addEventListener("keydown", (e) => {
   e.stopPropagation();
 });
 
-// Make functions visible to inline HTML event handlers
-Object.assign(window, {
-  selectStarterKit,
-  fightMonster,
-  toggleInventory,
-  toggleCrafting,
-  toggleSkills,
-  gatherResource,
-  tryEquip,
-  usePray,
-  startNewGame,
-  toggleSettings,
-  renderCraftingUI,
-  craftItem,
-  selectedMonster,
-  buildSaveFromCurrentState,
-  gatherableResources,
-  selectedStarter,
-  onStartNewGameClick
-});
-
 // Checking onload
 window.onload = function() {
     checkStarterKitSelection();
@@ -1618,3 +1597,30 @@ window.onload = function() {
     }
 };
 
+
+// Make functions visible to inline HTML event handlers
+Object.assign(window, {
+  // starter & flow
+  selectStarterKit,
+  onStartNewGameClick,
+  startNewGame,
+
+  // combat
+  selectMonster,      // only if your HTML calls selectMonster()
+  fightMonster,
+
+  // UI toggles
+  toggleSettings,
+  toggleInventory,
+  toggleCrafting,
+  toggleSkills,
+
+  // gameplay actions
+  gatherResource,
+  tryEquip,
+  usePray,
+
+  // crafting (only if called from HTML)
+  renderCraftingUI,
+  craftItem
+});
