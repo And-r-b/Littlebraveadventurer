@@ -22,19 +22,16 @@
       "!.vscode/**",
       "!dist/**"
     ],
-   "asarUnpack": [
-    "node_modules/steamworks.js/**/*"
+    "asarUnpack": ["**/steamworks.js/**"],
+    "extraResources": [
+    {
+      "from": "node_modules/steamworks.js/dist/win64/steam_api64.dll",
+      "to": "win64/steam_api64.dll"
+    }
   ],
-
   "win": {
     "target": "nsis",
-    "icon": "icons/smallknight.ico",
-    "extraResources": [
-      {
-        "from": "node_modules/steamworks.js/bin/win64/steam_api64.dll",
-        "to": "."
-      }
-    ]
+    "icon": "icons/smallknight.ico"
   },
 
   "linux": {

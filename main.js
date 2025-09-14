@@ -2,8 +2,8 @@
 let steamClient = null;
 try {
   const steamworks = require('steamworks.js');
-  // During dev you can use 480 (Spacewar) or your real AppID if you run via Steam
-  steamClient = require('steamworks.js').init(3997430);
+  const APP_ID = 3997430;
+  steamClient = steamworks.init(APP_ID);
   console.log('[Steam] Logged in as:', steamClient.localplayer.getName());
 } catch (e) {
   console.warn('[Steam] Steam not initialized:', e?.message || e);
@@ -830,6 +830,9 @@ function selectStarterKit(starter) {
         };
     }
 
+     const ok = unlockAchievement('ACH_CHOSE_STARTER');
+    console.log('[Steam] ACH_CHOSE_STARTER result:', ok);
+
     // Remove the background image after class selection (using JavaScript to remove it)
     document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
 
@@ -854,8 +857,6 @@ function selectStarterKit(starter) {
     setTimeout(() => {
         setupGameplayMusic();
     }, 2100); // 2100ms = fadeTime (2000ms) + 100ms buffer
-
-    unlockAchievement('ACH_CHOSE_STARTER')
 }
 
 function checkStarterKitSelection() {
@@ -1276,7 +1277,7 @@ function fightMonster() {
             // Stop the battle once the monster is defeated
             clearInterval(battleInterval);
 
-            awardKillAchievements(selectMonster);
+            awardKillAchievements(selectedMonster);
             return; // Exit the interval callback function
         }
 

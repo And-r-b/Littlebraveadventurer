@@ -1,3 +1,11 @@
+try {
+  // This must run in the main process, before BrowserWindow
+  require('steamworks.js').electronEnableSteamOverlay();
+  console.log('[Steam] Overlay hook enabled');
+} catch (e) {
+  console.warn('[Steam] Overlay hook failed:', e?.message || e);
+}
+
 // electron-main.js
 const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron'); // <-- add ipcMain + globalShortcut
 const path = require('path');
