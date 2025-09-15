@@ -1,10 +1,3 @@
-try {
-  // This must run in the main process, before BrowserWindow
-  require('steamworks.js').electronEnableSteamOverlay();
-  console.log('[Steam] Overlay hook enabled');
-} catch (e) {
-  console.warn('[Steam] Overlay hook failed:', e?.message || e);
-}
 
 // electron-main.js
 const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron'); // <-- add ipcMain + globalShortcut
@@ -13,6 +6,14 @@ const fs = require('fs');
 
 // For Dev Testing for sound.
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
+try {
+  // This must run in the main process, before BrowserWindow
+  require('steamworks.js').electronEnableSteamOverlay();
+  console.log('[Steam] Overlay hook enabled');
+} catch (e) {
+  console.warn('[Steam] Overlay hook failed:', e?.message || e);
+}
 
 let win;
 const SAVE_FILE = path.join(app.getPath('userData'), 'save.json');
@@ -24,7 +25,7 @@ function createWindow() {
     fullscreenable: true,
     autoHideMenuBar: true,
     webPreferences: {
-      contextIsolation: false,
+      contextIsolation: true,
       devTools: false,
       nodeIntegration: true,
       preload: path.join(__dirname, 'preload.js') // <-- add this
@@ -33,8 +34,7 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
-
-  require('steamworks.js').electronEnableSteamOverlay(); // call near the bottom of this file
+  
 }
 
 app.whenReady().then(() => {

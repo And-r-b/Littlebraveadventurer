@@ -43,6 +43,8 @@ function buildSaveFromCurrentState() {
 }
 
 
+
+
 if (isNaN(musicVolume)) {
   musicVolume = 0.3; 
   localStorage.setItem("musicVolume", musicVolume);
@@ -51,6 +53,13 @@ if (isNaN(musicVolume)) {
 if (isNaN(sfxVolume)) {
   sfxVolume = 0.3; // Default sound effects volume
   localStorage.setItem("sfxVolume", sfxVolume);
+}
+
+if (localStorage.getItem("musicEnabled") === null) {
+  localStorage.setItem("musicEnabled", "true");
+}
+if (localStorage.getItem("soundEnabled") === null) {
+  localStorage.setItem("soundEnabled", "true");
 }
 
 function asset(relPath) {
@@ -63,7 +72,10 @@ function setupTitleMusic() {
     const musicEnabled = localStorage.getItem("musicEnabled") === "true";
 
     if (musicEnabled) {
-        titleMusic = new Audio("sounds/titlescreenmusic.mp3");
+        if (titleMusic) { 
+            try { titleMusic.pause(); } catch {} 
+        }
+        titleMusic = new Audio(asset("sounds/titlescreenmusic.mp3"));
         titleMusic.loop = true;
         titleMusic.volume = musicVolume;
         titleMusic.play().catch((err) => {
@@ -250,14 +262,17 @@ const monsters = {
 };
 
 function playSound(soundPath) {
-    if (!hasSelectedStarter) return; // <-- block SFX until class chosen
-    const soundEnabled = localStorage.getItem("soundEnabled") === "true";
-    if (!soundEnabled) return;
+  if (!hasSelectedStarter) return;
+  if (!soundPath || /\/$/.test(soundPath)) return; // ignore empty/placeholder like "sounds/"
 
-    const audio = new Audio(soundPath);
-    audio.volume = sfxVolume;
-    audio.play();
+  const soundEnabled = localStorage.getItem("soundEnabled") === "true";
+  if (!soundEnabled) return;
+
+  const audio = new Audio(asset(soundPath)); // use asset() for packaged builds
+  audio.volume = sfxVolume;
+  audio.play().catch(err => console.warn('SFX play failed:', err));
 }
+
 // Define a mapping of monsters to their background image and the monster image
 const monsterDataMap = {
   'Slime': {
@@ -268,22 +283,22 @@ const monsterDataMap = {
   'Wolf': {
     background: 'url("images/fantasy-forest.png")',
     monsterImage: 'images/wolf.png',
-    sound: 'sounds/'
+    sound: ''
   },
   'Goblin': {
     background: 'url("images/goblin-camp.png")',
     monsterImage: 'images/goblin.png',
-    sound: 'sounds/'
+    sound: ''
   },
   'Orc': {
     background: 'url("images/orc-camp.png")',
     monsterImage: 'images/orc.png',
-    sound: 'sounds/'
+    sound: ''
   },
   'Angus': {
     background: 'url("images/angusfields.png")',
     monsterImage: 'images/angus.png',
-    sound: 'sounds/'
+    sound: ''
   }
 };
 
@@ -312,22 +327,18 @@ function selectMonster() {
     }
 }
 
-const fsBtn = document.getElementById('fullscreenToggle');
-if (fsBtn) {
-  // set initial label based on current state
-  window.electronAPI.getFullScreenState().then(isFull => {
-    fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
-  });
 
-  fsBtn.addEventListener('click', async () => {
-    const isFull = await window.electronAPI.toggleFullScreen();
-    fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
+const quitBtn = document.getElementById("quitGameButton");
+if (quitBtn) {
+  quitBtn.addEventListener("click", () => {
+    if (window.electronAPI?.quitApp) {
+      window.electronAPI.quitApp();
+    } else {
+      // dev fallback if preload didn’t load for some reason
+      window.close();
+    }
   });
 }
-
-document.getElementById("quitGameButton").addEventListener("click", () => {
-  window.electronAPI.quitApp();
-});
 
 //Updating player stats when you add a new weapon or armor dynamically
 function updatePlayerStats() {
@@ -610,7 +621,7 @@ function toggleCrafting() {
     // Hide other sections
     document.getElementById('skillsContainer').style.display = 'none';
     document.getElementById('inventoryContainer').style.display = 'none';
-    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('settingsModal').style.display = 'none';
     document.getElementById('lootContainer').style.display = 'none';
   
     // Toggle crafting interface
@@ -944,7 +955,7 @@ function tryEquip(itemName) {
 function toggleInventory() {
     document.getElementById('skillsContainer').style.display = 'none';
     document.getElementById('craftingContainer').style.display = 'none';
-    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('settingsModal').style.display = 'none';
     document.getElementById('lootContainer').style.display = 'none';
     let inventoryContainer = document.getElementById("inventoryContainer");
     let body = document.body; // Get the body element (or any parent element)
@@ -964,7 +975,7 @@ function toggleSkills() {
     // Hide other menus
     document.getElementById('inventoryContainer').style.display = 'none';
     document.getElementById('craftingContainer').style.display = 'none';
-    document.getElementById('settingsContainer').style.display = 'none';
+    document.getElementById('settingsModal').style.display = 'none';
     document.getElementById('lootContainer').style.display = 'none';
 
     let skillsContainer = document.getElementById('skillsContainer');
@@ -1093,28 +1104,9 @@ function syncSettingsUIFromStorage() {
   sfxSlider.value   = isNaN(savedSfxVol)   ? 0.3 : savedSfxVol;
 }
 
-function toggleSettings() {
-  // Hide other containers
-  document.getElementById('inventoryContainer').style.display = 'none';
-  document.getElementById('craftingContainer').style.display = 'none';
-  document.getElementById('skillsContainer').style.display = 'none';
-  document.getElementById('lootContainer').style.display = 'none';
-
-  const settingsContainer = document.getElementById("settingsContainer");
-  const opening = settingsContainer.style.display === "none" || settingsContainer.style.display === "";
-  settingsContainer.style.display = opening ? "block" : "none";
-
-  if (opening) {
-    syncSettingsUIFromStorage(); // refresh UI when opening
-  }
+function isSettingsOpen() {
+  return settingsEl && !settingsEl.hasAttribute("hidden") && getComputedStyle(settingsEl).display !== "none";
 }
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    toggleSettings();
-  }
-});
-
 // ---- Save toggles ----
 document.getElementById("musicToggle").addEventListener("change", function () {
   localStorage.setItem("musicEnabled", this.checked);
@@ -1149,32 +1141,8 @@ document.getElementById("sfxVolume").addEventListener("input", function () {
 });
 
 
-function closeSettings() {
-  const settingsContainer = document.getElementById("settingsContainer");
-  const overlay = document.getElementById("settingsOverlay");
-  settingsContainer.style.display = "none";
-  if (overlay) overlay.style.display = "none";
-}
-
-function openSettings() {
-  const settingsContainer = document.getElementById("settingsContainer");
-  const overlay = document.getElementById("settingsOverlay");
-  settingsContainer.style.display = "block";
-  if (overlay) overlay.style.display = "block";
-  // if you use sync-on-open:
-  if (typeof syncSettingsUIFromStorage === "function") {
-    syncSettingsUIFromStorage();
-  }
-}
 
 document.getElementById("settingsCloseBtn").addEventListener("click", closeSettings);
-
-// Esc to close
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeSettings();
-});
-
-
 
 // Update HealthBars Tick
 
@@ -1508,19 +1476,20 @@ function loadGameData() {
     updateHealthBars(playerHP);  // Update the player's health bar
 }
 
+
 // ------- Settings modal helpers -------
-const settingsEl = document.getElementById("settingsContainer");
-const othersToHide = [
-  "inventoryContainer",
-  "craftingContainer",
-  "skillsContainer",
-  "lootContainer",
-];
+const settingsEl = document.getElementById("settingsModal"); // <- modal id
+const othersToHide = ["inventoryContainer","craftingContainer","skillsContainer","lootContainer"];
 
 function isHidden(el) {
-  // works whether you hide via [hidden], CSS, or inline style
   return el.hasAttribute("hidden") || getComputedStyle(el).display === "none";
 }
+
+// add this helper (it was missing)
+function isSettingsOpen() {
+  return settingsEl && !settingsEl.hasAttribute("hidden") && getComputedStyle(settingsEl).display !== "none";
+}
+
 
 function openSettings() {
   othersToHide.forEach(id => {
@@ -1528,14 +1497,18 @@ function openSettings() {
     if (el) el.style.display = "none";
   });
 
-  settingsEl.removeAttribute("hidden");         // preferred
-  settingsEl.style.display = "block";           // also set display for legacy code
+  settingsEl.removeAttribute("hidden");
+  settingsEl.style.display = "block";
+
   if (typeof syncSettingsUIFromStorage === "function") {
     syncSettingsUIFromStorage();
   }
 }
 
 function closeSettings() {
+  const backdrop = document.getElementById("modalBackdrop");
+  if (backdrop) backdrop.hidden = true;
+
   settingsEl.setAttribute("hidden", "");
   settingsEl.style.display = "none";
 }
@@ -1544,25 +1517,19 @@ function toggleSettings() {
   isHidden(settingsEl) ? openSettings() : closeSettings();
 }
 
-// Make it callable from your button's onclick="toggleSettings()"
+// make button onclick work
 window.toggleSettings = toggleSettings;
 
-// ESC works both to open and close
+// ✖ close button
+document.getElementById("settingsCloseBtn")?.addEventListener("click", closeSettings);
+
+// ESC toggles modal (now safe)
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
-
-  if (isSettingsOpen()) {
-    // ESC closes if open
-    closeSettings();
-  } else {
-    // ESC opens if closed
-    openSettings();
-  }
-
-  // prevent other game handlers from re-triggering or overriding this
+  if (isSettingsOpen()) closeSettings(); else openSettings();
   e.preventDefault();
   e.stopPropagation();
-});
+})
 
 // Checking onload
 window.onload = function() {
