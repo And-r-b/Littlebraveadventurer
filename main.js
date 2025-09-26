@@ -404,12 +404,12 @@ updatePlayerStats();
 // Different Crafting recipies
 const craftingRecipes = {
     // Weapons
-    "Basic Sword": {
+    "Training Sword": {
         materials: {
             "Wood": 3,
             "Leather": 2
         },
-        result: "Basic Sword",
+        result: "Training Sword",
         attackBoost: 7
     },
 
@@ -900,9 +900,9 @@ function selectStarterKit(starter) {
     // Set the equipment based on the selected starter kit
     if (starter === "Knight") {
         equipment = { 
-            weapon: "Wooden Sword", 
+            weapon: "Stick", 
             attack: 5, 
-            armor: "Common Clothing", // Start with leather armor
+            armor: "Clothes", // Start with leather armor
             defense: 0 // Leather Armor provides some defense
         };
     }
