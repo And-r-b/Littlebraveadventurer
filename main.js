@@ -84,6 +84,11 @@ function setupTitleMusic() {
     }
 }
 
+function isGameVisible() {
+  const gc = document.getElementById('gameContent');
+  return gc && getComputedStyle(gc).display === 'block';
+}
+
 
 function stopTitleMusic(fadeTime = 2000) {
     if (!titleMusic) return;
@@ -178,18 +183,30 @@ function crossfadeSwap(swapFn) {
   overlay.addEventListener('transitionend', onFadeToBlack, { once: true });
 }
 
-/** Call this once when a *new* player starts the game */
-window.addEventListener('load', () => {
-  const hasPlayed = localStorage.getItem('hasPlayed') === '1';
-  if (hasPlayed) {
-    // Double RAF guarantees at least one paint before we start fading
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        enterGameWithTransition(); // uses crossfadeSwap inside
-      });
-    });
+function clearVolatileForNewGame() {
+  // Timers / cooldowns
+  localStorage.removeItem('gatherStartTime');
+
+  localStorage.removeItem('prayStartTime');
+  localStorage.removeItem('prayCooldownTime');
+  localStorage.removeItem('prayCooldownActive');
+
+  // Stop any running pray cooldown loop & reset UI
+  if (typeof cooldownInterval !== 'undefined' && cooldownInterval) {
+    clearInterval(cooldownInterval);
+    cooldownInterval = null;
   }
-});
+  const prayBtn = document.getElementById('prayButton');
+  if (prayBtn) { prayBtn.disabled = false; prayBtn.textContent = 'Pray'; }
+  const prayCd = document.getElementById('prayCooldown');
+  if (prayCd) { prayCd.style.display = 'none'; }
+
+  // Local “save-state” bits so nothing from the old run bleeds in
+  localStorage.removeItem('playerHP');
+  localStorage.removeItem('inventory');
+  localStorage.removeItem('equipment');
+  localStorage.removeItem('starterKit');
+}
 
 /** Enter the game view with a smooth transition */
 function enterGameWithTransition() {
@@ -199,17 +216,118 @@ function enterGameWithTransition() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const hasPlayed = localStorage.getItem('hasPlayed') === '1';
-  if (hasPlayed) {
-    // Skip start/menu and crossfade straight into game
-    enterGameWithTransition();
+document.addEventListener('DOMContentLoaded', async () => {
+  const mainMenu = document.getElementById('mainMenu');
+  const starter  = document.getElementById('starterSelection');
+  const game     = document.getElementById('gameContent');
+
+  // Show ONLY the main menu on boot
+  if (mainMenu) mainMenu.style.display = 'block';
+  if (starter)  starter.style.display  = 'none';
+  if (game)     game.style.display     = 'none';
+
+  // Title music for menu
+  try { setupTitleMusic?.(); } catch {}
+
+  // Enable/disable Continue & Load depending on save presence
+  let hasSave = false;
+  try { hasSave = !!(await window.saveAPI?.load?.()); } catch {}
+
+  const btnContinue = document.getElementById('btnContinue');
+  // const btnLoad     = document.getElementById('btnLoad');
+  if (btnContinue) btnContinue.disabled = !hasSave;
+  // if (btnLoad)     btnLoad.disabled     = !hasSave;
+
+  // Hook menu buttons
+  document.getElementById('btnNewGame')?.addEventListener('click', startNewGameFromMenu);
+  document.getElementById('btnContinue')?.addEventListener('click', continueFromMenu);
+// document.getElementById('btnLoad')?.addEventListener('click', continueFromMenu); // single slot for now
+  document.getElementById('btnQuit')?.addEventListener('click', () => {
+    if (window.electronAPI?.quitApp) window.electronAPI.quitApp();
+  });
+
+  // Wire Settings → Save Game
+  const saveBtn = document.getElementById('saveNowButton');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      const orig = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+      try {
+        await saveGameData();        // uses your existing function
+        saveBtn.textContent = 'Saved ✓';
+      } catch (e) {
+        console.error(e);
+        saveBtn.textContent = 'Save failed';
+      } finally {
+        setTimeout(() => { saveBtn.textContent = orig; saveBtn.disabled = false; }, 900);
+      }
+    });
   }
 });
 
-function onStartNewGameClick() {
-  markHasPlayed();            // remember this player next time
-  enterGameWithTransition();  // smooth transition right now too
+function applySaveToState(save) {
+  try {
+    playerHP  = Number(save.playerHP ?? 100);
+    equipment = save.equipment ?? equipment;
+    inventory = save.inventory ?? inventory;
+
+    // mirror settings to localStorage so existing UI continues to work
+    const s = save.settings || {};
+    localStorage.setItem("musicEnabled", String(!!s.musicEnabled));
+    localStorage.setItem("soundEnabled", String(!!s.soundEnabled));
+    localStorage.setItem("musicVolume", String(s.musicVolume ?? 0.3));
+    localStorage.setItem("sfxVolume",   String(s.sfxVolume   ?? 0.3));
+
+    // refresh UI
+    renderEquipmentSlots();
+    renderEquipmentPanel?.();
+    updatePlayerStats?.();
+    updateInventory?.();
+    // select current monster background if any
+    if (isGameVisible()) selectMonster?.();
+  } catch (e) {
+    console.warn('applySaveToState failed:', e);
+  }
+}
+
+async function startNewGameFromMenu() {
+  // wipe existing save file 
+  try { await window.saveAPI?.clear?.(); } catch {}
+  // clear volatile/local state so old timers don’t carry over
+  clearVolatileForNewGame();
+
+  // reset minimal runtime state
+  playerHP = 100;
+  equipment = { weapon: "Stick", attack: 5, armor: "Clothes", defense: 0 };
+  inventory = { "Iron Ore": 0, "Wood": 0, "Leather": 0, "Steel Ore": 0 };
+
+  // swap to Starter screen, keep title music for now
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('starterSelection').style.display = 'block';
+  document.getElementById('gameContent').style.display = 'none';
+}
+
+async function continueFromMenu() {
+  const save = await window.saveAPI?.load?.();
+  if (!save) return;
+
+  applySaveToState(save); // your helper that hydrates playerHP, equipment, inventory, settings
+
+  // show game
+  document.getElementById('mainMenu').style.display = 'none';
+  document.getElementById('starterSelection').style.display = 'none';
+  document.getElementById('gameContent').style.display = 'block';
+
+  // refresh UI & timers
+  renderEquipmentSlots?.();
+  updateInventory?.();
+  selectMonster?.();
+  restoreGatheringCooldown?.();
+
+  // music swap
+  stopTitleMusic?.();
+  setTimeout(() => setupGameplayMusic?.(), 200);
 }
 
 // Global variables and starter kit
@@ -315,13 +433,13 @@ const monsters = {
 };
 
 function playSound(soundPath) {
-  if (!hasSelectedStarter) return;
-  if (!soundPath || /\/$/.test(soundPath)) return; // ignore empty/placeholder like "sounds/"
+  if (!isGameVisible()) return;                   // block sounds on menu/starter
+  if (!soundPath || /\/$/.test(soundPath)) return;
 
   const soundEnabled = localStorage.getItem("soundEnabled") === "true";
   if (!soundEnabled) return;
 
-  const audio = new Audio(asset(soundPath)); // use asset() for packaged builds
+  const audio = new Audio(asset(soundPath));
   audio.volume = sfxVolume;
   audio.play().catch(err => console.warn('SFX play failed:', err));
 }
@@ -356,6 +474,8 @@ const monsterDataMap = {
 };
 
 function selectMonster() {
+    if (!isGameVisible()) return;
+
     const selectElement = document.getElementById("monsterSelect");
     const monsterName = selectElement.value;
 
@@ -720,7 +840,7 @@ function renderCraftingUI() {
 
 // Gathering Process with Persistent Timer
 
-let gatherCooldown = 5; // 10 minutes in seconds
+let gatherCooldown = 600; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
 let gatherLabel  = gatherButton.querySelector(".label");
 let messageElement = document.getElementById("message");
@@ -866,75 +986,61 @@ function cleanupInventory() {
 
 // Function to select starter kit
 function selectStarterKit(starter) {
-      
-    const existing = JSON.parse(localStorage.getItem("equipment") || "{}");
-    const hasExistingEquip = existing && (existing.weapon || existing.armor);
+  // If the player already has equipment (from a previous save), don't overwrite
+  const existing = JSON.parse(localStorage.getItem("equipment") || "{}");
+  const hasExistingEquip = existing && (existing.weapon || existing.armor);
 
-    if (hasExistingEquip) {
-        // Player already has equipment → don’t overwrite it
-        hasSelectedStarter = true;
-        selectedStarter = localStorage.getItem("starterKit"); 
+  if (hasExistingEquip) {
+    hasSelectedStarter = true;
+    selectedStarter = localStorage.getItem("starterKit");
 
-        // Just switch screens & music
-        crossfadeSwap(() => {
-            document.getElementById("starterSelection").style.display = "none";
-            document.getElementById("gameContent").style.display = "block";
-        });
-        renderEquipmentSlots();
-        updateInventory();
-        selectMonster();
-        stopTitleMusic();
-        setTimeout(setupGameplayMusic, 2100);
-        return; // ✅ exit so starter gear doesn’t overwrite saved gear
-    }
-
-    // Store the selected starter in localStorage
-    localStorage.setItem("starterKit", starter);
-    hasSelectedStarter = true;  
-
-    // Store the selected starter in the global variable
-    selectedStarter = starter;
-
-    const selectedMonster = 'Slime';
-
-    // Set the equipment based on the selected starter kit
-    if (starter === "Knight") {
-        equipment = { 
-            weapon: "Stick", 
-            attack: 5, 
-            armor: "Clothes", // Start with leather armor
-            defense: 0 // Leather Armor provides some defense
-        };
-    }
-
-     const ok = unlockAchievement('ACH_CHOSE_STARTER');
-    console.log('[Steam] ACH_CHOSE_STARTER result:', ok);
-
-    // Remove the background image after class selection (using JavaScript to remove it)
-    document.getElementById("starterSelection").style.backgroundImage = ''; // Remove background
-
-    // Hide the starter selection screen and show the game content
     crossfadeSwap(() => {
-        document.getElementById("starterSelection").style.display = "none";
-        document.getElementById("gameContent").style.display = "block";
+      document.getElementById("starterSelection").style.display = "none";
+      document.getElementById("gameContent").style.display = "block";
+      restoreGatheringCooldown?.();
+      selectMonster?.();              // ✅ now runs when game is visible
     });
 
-    // Set the selected monster (Slime) as default
-    document.getElementById("monsterSelect").value = selectedMonster;
+    renderEquipmentSlots?.();
+    renderEquipmentPanel?.();
+    updateInventory?.();
 
-    // Render initial game
-    renderEquipmentSlots();
-    renderEquipmentPanel();
-    updateInventory();
-    selectMonster();
+    stopTitleMusic?.();
+    setTimeout(() => setupGameplayMusic?.(), 2100);
+    return;
+  }
 
-    // Fade out title music first
-    stopTitleMusic();
+  // New game: remember the chosen starter
+  localStorage.setItem("starterKit", starter);
+  hasSelectedStarter = true;
+  selectedStarter = starter;
 
-    // Start gameplay music after the fade out is done (fade time + a bit buffer)
-    setTimeout(() => {
-        setupGameplayMusic();
-    }, 2100); // 2100ms = fadeTime (2000ms) + 100ms buffer
+  // Give starting gear
+  if (starter === "Knight") {
+    equipment = { weapon: "Stick", attack: 5, armor: "Clothes", defense: 0 };
+  }
+
+  unlockAchievement?.('ACH_CHOSE_STARTER');
+
+  // Enter the game and init monster/background/sfx AFTER game is visible
+  crossfadeSwap(() => {
+    document.getElementById("starterSelection").style.display = "none";
+    document.getElementById("gameContent").style.display = "block";
+
+    const ms = document.getElementById("monsterSelect");
+    if (ms) ms.value = "Slime";       // ✅ default selection
+    restoreGatheringCooldown?.();
+    selectMonster?.();                // ✅ bg + SFX now works
+  });
+
+  renderEquipmentSlots?.();
+  renderEquipmentPanel?.();
+  updateInventory?.();
+
+  saveGameData?.();                   // persist starter choice
+
+  stopTitleMusic?.();
+  setTimeout(() => setupGameplayMusic?.(), 2100);
 }
 
 function checkStarterKitSelection() {
@@ -1072,7 +1178,7 @@ window.addEventListener('load', function () {
         document.getElementById('prayCooldown').style.display = 'inline'; // Show cooldown message
         updateCooldownDisplay();
         startCooldown();
-        selectMonster();
+        if (isGameVisible()) selectMonster();
     }
 });
 
@@ -1514,11 +1620,6 @@ async function initSaves() {
   } catch (e) {
     console.warn("initSaves failed, fallback to localStorage only:", e);
   }
-
-  // kick off your normal startup
-  checkStarterKitSelection();
-  updateInventory();
-  selectMonster();
 }
 
 
@@ -1615,12 +1716,13 @@ document.addEventListener("keydown", (e) => {
   e.stopPropagation();
 })
 
+
+
 // ===== Battle Result Modal helpers =====
 const resultModal = document.getElementById('resultModal');
 const resultTitle = document.getElementById('resultTitle');
 const resultText  = document.getElementById('resultText');
 const resultPrimary   = document.getElementById('resultPrimary');   // OK
-const resultSecondary = document.getElementById('resultSecondary'); // Fight Again
 const modalBackdrop   = document.getElementById('modalBackdrop');
 
 function openResultModal(outcome, monsterName, dropName = null) {
@@ -1646,48 +1748,40 @@ function closeResultModal() {
   document.body.classList.remove('modal-open');
 }
 
-// Checking onload
-window.onload = function() {
-    checkStarterKitSelection();
-    loadGameData();
+function restoreGatheringCooldown() {
+  const btn   = document.getElementById('gatherButton');
+  const label = document.querySelector('#gatherButton .label');
 
-    // Check if starter kit already selected in localStorage
-    if (!localStorage.getItem("starterKit")) {
-        // Show starter selection screen and play title music
-        document.getElementById("starterSelection").style.display = "block";
-        document.getElementById("gameContent").style.display = "none";
-        setupTitleMusic();
-    } else {
-        // Starter kit selected, skip title screen, show game directly
-        document.getElementById("starterSelection").style.display = "none";
-        document.getElementById("gameContent").style.display = "block";
-        setupGameplayMusic();
-    }
+  // Guard if UI isn't on screen yet
+  if (!btn) return;
 
-    // Restore gathering cooldown
-    const saved = parseInt(localStorage.getItem("gatherStartTime") || "0", 10);
-    if (saved) {
-    const elapsed = Math.floor((Date.now() - saved) / 1000);
-    const remaining = gatherCooldown - elapsed;
-    if (remaining > 0) {
-        startGatherCooldown(remaining);
-    } else {
-        gatherButton.disabled = false;
-        setGatherText("Gather");
-        localStorage.removeItem("gatherStartTime");
-    }
-    } else {
-    gatherButton.disabled = false;
-    setGatherText("Gather");
-    }
-};
+  const saved = parseInt(localStorage.getItem("gatherStartTime") || "0", 10);
+
+  if (!saved) {
+    btn.disabled = false;
+    if (label) label.textContent = "Gather";
+    if (typeof setGatherText === 'function') setGatherText("Gather");
+    return;
+  }
+
+  const elapsed   = Math.floor((Date.now() - saved) / 1000);
+  const remaining = Math.max(0, (typeof gatherCooldown === 'number' ? gatherCooldown : 0) - elapsed);
+
+  if (remaining > 0) {
+    startGatherCooldown(remaining);
+  } else {
+    btn.disabled = false;
+    if (label) label.textContent = "Gather";
+    if (typeof setGatherText === 'function') setGatherText("Gather");
+    localStorage.removeItem("gatherStartTime");
+  }
+}
 
 
 // Make functions visible to inline HTML event handlers
 Object.assign(window, {
   // starter & flow
   selectStarterKit,
-  onStartNewGameClick,
   startNewGame,
 
   // combat
@@ -1702,7 +1796,6 @@ Object.assign(window, {
 
   // gameplay actions
   gatherResource,
-  tryEquip,
   usePray,
 
   // crafting (only if called from HTML)

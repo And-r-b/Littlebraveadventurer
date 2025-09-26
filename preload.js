@@ -8,7 +8,15 @@ contextBridge.exposeInMainWorld('saveAPI', {
 });
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // fullscreen you already use
   toggleFullScreen: () => ipcRenderer.invoke('toggle-fullscreen'),
   getFullScreenState: () => ipcRenderer.invoke('get-fullscreen-state'),
-  quitApp: () => ipcRenderer.invoke("quit-app")
+
+  // quit
+  quitApp: () => ipcRenderer.invoke('quit-app'),
+
+  // save system
+  saveRead:  () => ipcRenderer.invoke('save:read'),
+  saveWrite: (saveObj) => ipcRenderer.invoke('save:write', saveObj),
+  saveClear: () => ipcRenderer.invoke('save:clear'),
 });
