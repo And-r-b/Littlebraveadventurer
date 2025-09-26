@@ -248,6 +248,59 @@ let selectedMonster = "";
 let selectedStarter = ""; // Store the selected starter kit
 
 
+const BASE_ATTACK  = 5;  // your current starting attack
+const BASE_DEFENSE = 0;  // your current starting defense
+
+function getEquipType(itemName) {
+  const r = craftingRecipes[itemName];
+  if (!r) return null;
+  if (typeof r.attackBoost  !== "undefined") return "weapon";
+  if (typeof r.defenseBoost !== "undefined") return "armor";
+  return null;
+}
+
+function isEquipped(itemName) {
+  const kind = getEquipType(itemName);
+  if (kind === "weapon") return equipment.weapon === itemName;
+  if (kind === "armor")  return equipment.armor  === itemName;
+  return false;
+}
+
+function toggleEquip(itemName) {
+  const r = craftingRecipes[itemName];
+  if (!r) return;                       // not an equippable recipe
+  const kind = getEquipType(itemName);
+  if (!kind) return;
+
+  if (kind === "weapon") {
+    if (equipment.weapon === itemName) {
+      // Unequip
+      equipment.weapon = "None";
+      equipment.attack = BASE_ATTACK;
+    } else {
+      // Equip this weapon
+      equipment.weapon = itemName;
+      equipment.attack = r.attackBoost ?? BASE_ATTACK;
+    }
+  } else if (kind === "armor") {
+    if (equipment.armor === itemName) {
+      // Unequip
+      equipment.armor  = "None";
+      equipment.defense = BASE_DEFENSE;
+    } else {
+      // Equip this armor
+      equipment.armor  = itemName;
+      equipment.defense = r.defenseBoost ?? BASE_DEFENSE;
+    }
+  }
+
+  renderEquipmentSlots();
+  renderEquipmentPanel();
+  updatePlayerStats();
+  saveGameData();
+  updateInventory(); // refresh buttons/labels
+}
+
 
 // Construct of what monsters that is available
 const monsters = {
@@ -587,21 +640,6 @@ function craftItem(itemName) {
             // Add the crafted item to the inventory
             inventory[recipe.result] = (inventory[recipe.result] || 0) + 1;
 
-            // Equip the crafted item (if applicable)
-            if (recipe.attackBoost !== undefined) {
-                // It's a weapon
-                if (recipe.attackBoost > (equipment.attack || 0)) {
-                    equipment.weapon = recipe.result;
-                    equipment.attack = recipe.attackBoost;
-                }
-            } else if (recipe.defenseBoost !== undefined) {
-                // It's armor
-                if (recipe.defenseBoost > (equipment.defense || 0)) {
-                    equipment.armor = recipe.result;
-                    equipment.defense = recipe.defenseBoost;
-                }
-            }
-
             // Update UI
             updateInventory();
             renderEquipmentSlots();
@@ -682,7 +720,7 @@ function renderCraftingUI() {
 
 // Gathering Process with Persistent Timer
 
-let gatherCooldown = 600; // 10 minutes in seconds
+let gatherCooldown = 5; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
 let gatherLabel  = gatherButton.querySelector(".label");
 let messageElement = document.getElementById("message");
@@ -692,40 +730,46 @@ function startGatherCooldown(remainingTime) {
     gatherButton.disabled = true;
 
     let countdown = setInterval(() => {
-        let elapsedTime = Math.floor((Date.now() - localStorage.getItem("gatherStartTime")) / 1000);
+        
+        let started = parseInt(localStorage.getItem("gatherStartTime") || "0", 10);
+        let elapsedTime = Math.floor((Date.now() - started) / 1000);
+
         remainingTime = gatherCooldown - elapsedTime;
 
         if (remainingTime <= 0) {
             clearInterval(countdown);
             gatherButton.disabled = false;
-            gatherLabel.textContent = "Gather";
+            gatherLabel.textContent = "Gather"; 
             giveGatherReward();
-            localStorage.removeItem("gatherStartTime"); // Clear saved time
+            localStorage.removeItem("gatherStartTime");
         } else {
-            // Ensure remaining time is always a valid number
             if (isNaN(remainingTime) || remainingTime < 0) {
                 clearInterval(countdown);
                 gatherButton.disabled = false;
-                gatherButton.innerText = "Gather Resource";
+                gatherLabel.textContent = "Gather"; 
                 return;
             }
 
             let minutes = Math.floor(remainingTime / 60);
             let seconds = remainingTime % 60;
-            gatherLabel.textContent = `Gathering (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
+            gatherLabel.textContent =
+                `Gathering (${minutes}:${seconds < 10 ? "0" : ""}${seconds})`;
         }
     }, 1000);
 }
 
+function setGatherText(txt){
+  const label = document.querySelector('#gatherButton .label');
+  if (label) label.textContent = txt;
+  else document.getElementById('gatherButton').textContent = txt; // fallback
+}
 
 // Function to handle the gathering process (starts cooldown but delays rewards)
 function gatherResource() {
-    if (gatherButton.disabled) return; // Prevent multiple clicks
-
-    let startTime = Date.now();
-    localStorage.setItem("gatherStartTime", startTime);
-
-    startGatherCooldown(gatherCooldown); // Start cooldown
+  if (gatherButton.disabled) return;
+  localStorage.setItem("gatherStartTime", Date.now().toString());
+  setGatherText("Gathering");
+  startGatherCooldown(gatherCooldown);
 }
 
 function giveGatherReward() {
@@ -756,7 +800,7 @@ function giveGatherReward() {
     localStorage.setItem("inventory", JSON.stringify(inventory));
 
     // Update inventory display
-    updateInventoryDisplay();
+    updateInventory();
 
     // Create message only for items that are > 0
     let gatheredMessage = Object.entries(gatheredItems)
@@ -822,6 +866,28 @@ function cleanupInventory() {
 
 // Function to select starter kit
 function selectStarterKit(starter) {
+      
+    const existing = JSON.parse(localStorage.getItem("equipment") || "{}");
+    const hasExistingEquip = existing && (existing.weapon || existing.armor);
+
+    if (hasExistingEquip) {
+        // Player already has equipment → don’t overwrite it
+        hasSelectedStarter = true;
+        selectedStarter = localStorage.getItem("starterKit"); 
+
+        // Just switch screens & music
+        crossfadeSwap(() => {
+            document.getElementById("starterSelection").style.display = "none";
+            document.getElementById("gameContent").style.display = "block";
+        });
+        renderEquipmentSlots();
+        updateInventory();
+        selectMonster();
+        stopTitleMusic();
+        setTimeout(setupGameplayMusic, 2100);
+        return; // ✅ exit so starter gear doesn’t overwrite saved gear
+    }
+
     // Store the selected starter in localStorage
     localStorage.setItem("starterKit", starter);
     hasSelectedStarter = true;  
@@ -858,6 +924,7 @@ function selectStarterKit(starter) {
 
     // Render initial game
     renderEquipmentSlots();
+    renderEquipmentPanel();
     updateInventory();
     selectMonster();
 
@@ -871,85 +938,86 @@ function selectStarterKit(starter) {
 }
 
 function checkStarterKitSelection() {
-    // Retrieve starter kit from localStorage if any
-    let starterKit = localStorage.getItem("starterKit");
+  const starterKit = localStorage.getItem("starterKit");
 
-    if (starterKit) {
-        // If a starter kit is saved, automatically select it
-        selectStarterKit(starterKit);
-    } else {
-        // Ensure starter selection screen is visible if no kit is selected
-        document.getElementById("starterSelection").style.display = "block";
-        document.getElementById("gameContent").style.display = "none"; // Hide game until a kit is selected
-    }
+  if (starterKit) {
+    // player already chose; do NOT reset equipment here
+    hasSelectedStarter = true;
+    document.getElementById("starterSelection").style.display = "none";
+    document.getElementById("gameContent").style.display = "block";
+    renderEquipmentSlots();
+    updateInventory();      // keeps equip links
+  } else {
+    document.getElementById("starterSelection").style.display = "block";
+    document.getElementById("gameContent").style.display = "none";
+  }
 }
 
 // Function to render equipment slots (e.g., weapon)
 function renderEquipmentSlots() {
-    const weaponSlot = document.getElementById('weaponSlot');
-    const armorSlot = document.getElementById('armorSlot');
     const attackDisplay = document.getElementById('playerAttack');
     const defenseDisplay = document.getElementById('playerDefense');
 
-    // Update weapon slot
-    if (equipment.weapon) {
-        weaponSlot.textContent = `Weapon: ${equipment.weapon}`;
-    } else {
-        weaponSlot.textContent = "Weapon: None";
+    if (attackDisplay) {
+        attackDisplay.textContent = equipment.attack;
     }
-
-    // Update armor slot
-    if (equipment.armor) {
-        armorSlot.textContent = `Armor: ${equipment.armor}`;
-    } else {
-        armorSlot.textContent = "Armor: None";
+    if (defenseDisplay) {
+        defenseDisplay.textContent = equipment.defense;
     }
-
-    // Update the player's attack and defense stats in the health bar section
-    attackDisplay.textContent = equipment.attack;  // Update attack value
-    defenseDisplay.textContent = equipment.defense; // Update defense value
 }
+
+function renderEquipmentPanel() {
+  const w = document.getElementById('equipPanelWeapon');
+  const a = document.getElementById('equipPanelArmor');
+  const atk = document.getElementById('equipPanelAttack');
+  const def = document.getElementById('equipPanelDefense');
+
+  if (!w || !a || !atk || !def) return; // guard if panel not in DOM yet
+
+  w.textContent   = equipment.weapon || "None";
+  a.textContent   = equipment.armor  || "None";
+  atk.textContent = equipment.attack ?? BASE_ATTACK;
+  def.textContent = equipment.defense ?? BASE_DEFENSE;
+}
+
 // Function to update the inventory display
 function updateInventory(newLoot = "") {
-    let inventoryDiv = document.getElementById("inventory");
-    inventoryDiv.innerHTML = "<h2>Inventory</h2>"; // Ensure title stays
+  const inventoryDiv = document.getElementById("inventory");
+  inventoryDiv.innerHTML = "<h2>Inventory</h2>";
 
-    // If a new item is gathered, show a message
-    if (newLoot) {
-        let newLootDiv = document.createElement("div");
-        newLootDiv.classList.add("inventory-item");
-        newLootDiv.innerHTML = `<span>You gathered: ${newLoot}</span>`;
-        inventoryDiv.appendChild(newLootDiv);
+  if (newLoot) {
+    const newLootDiv = document.createElement("div");
+    newLootDiv.classList.add("inventory-item");
+    newLootDiv.innerHTML = `<span>You gathered: ${newLoot}</span>`;
+    inventoryDiv.appendChild(newLootDiv);
+  }
+
+  for (const item in inventory) {
+    if (inventory[item] <= 0) continue;
+
+    const div = document.createElement("div");
+    div.className = "inventory-item";
+
+    const kind = getEquipType(item);
+    if (!kind) {
+      // Not equippable (materials etc.)
+      div.innerHTML = `<span>${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
+    } else {
+      // Equippable (weapon/armor)
+      const equipped = isEquipped(item);
+      const btnText = equipped ? "Unequip" : "Equip";
+
+      div.innerHTML = `
+        <span>${item}${equipped ? " (equipped)" : ""}</span>
+        <span class='quantity'>x${inventory[item]}</span>
+        <button style="margin-left:8px" onclick="toggleEquip('${item}')">${btnText}</button>
+      `;
     }
 
-    // Loop through each item in the inventory and display it
-    for (let item in inventory) {
-        let itemDiv = document.createElement("div");
-        itemDiv.classList.add("inventory-item");
-        itemDiv.innerHTML = `<span class="equip-link" onclick="tryEquip('${item}')">${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
-        inventoryDiv.appendChild(itemDiv);
-    }
+    inventoryDiv.appendChild(div);
+  }
+  renderEquipmentPanel();
 }
-
-function tryEquip(itemName) {
-    const recipe = craftingRecipes[itemName];
-    if (!recipe) return;
-
-    if (recipe.attackBoost !== undefined) {
-        equipment.weapon = itemName;
-        equipment.attack = recipe.attackBoost;
-        alert(`${itemName} equipped as your weapon!`);
-    } else if (recipe.defenseBoost !== undefined) {
-        equipment.armor = itemName;
-        equipment.defense = recipe.defenseBoost;
-        alert(`${itemName} equipped as your armor!`);
-    }
-
-    renderEquipmentSlots();
-    updatePlayerStats();
-    saveGameData();
-}
-
 
 // Toggle Inventory (Make Sure It Opens/Closes)
 function toggleInventory() {
@@ -1199,6 +1267,17 @@ function updateHealthBars(playerHP, monster, selectedMonster) {
     }
 }
 
+function resetMonsterBar(monsterName) {
+  const maxHP = monsters[monsterName].hp;
+  const mBar = document.getElementById("monsterHealth");
+  const mText = document.getElementById("monsterHealthText");
+  if (mBar && mText) {
+    mBar.style.width = "100%";
+    mBar.style.backgroundColor = "green";
+    mText.textContent = maxHP;
+  }
+}
+
 
 
 // Fighting Function
@@ -1230,8 +1309,8 @@ function fightMonster() {
         // Check if the monster is defeated
         if (monster.hp === 0) {
             // Display victory message and drop item
-            document.getElementById("message").innerText = `You defeated ${selectedMonster}!`;
             let drop = monster.drops[Math.floor(Math.random() * monster.drops.length)]; // Random drop from the monster
+            openResultModal('win', selectedMonster, drop);
             if (inventory[drop]) {
                 inventory[drop] += 1; // Increase the count of the drop in inventory
             } else {
@@ -1244,6 +1323,10 @@ function fightMonster() {
 
             // Stop the battle once the monster is defeated
             clearInterval(battleInterval);
+
+            monster.hp = monsters[selectedMonster].hp;   // refresh model
+            resetMonsterBar(selectedMonster);
+            
 
             awardKillAchievements(selectedMonster);
             return; // Exit the interval callback function
@@ -1260,7 +1343,7 @@ function fightMonster() {
         // Check if the player is defeated
         if (playerHP <= 0) {
             playerHP = 0; // Ensure HP is set to 0 if the player is defeated
-            document.getElementById("message").innerText = `You were defeated by ${selectedMonster}!`;
+            openResultModal('lose', selectedMonster);
 
             // Save the game data after the battle (even if the player loses)
             saveGameData();
@@ -1276,10 +1359,10 @@ function fightMonster() {
     }, 1000); // Run the battle tick every second (1000 milliseconds)
 
     // Show the "Play Again" button after the battle is over
-    document.getElementById("playAgainButton").style.display = "inline-block";
+    //document.getElementById("playAgainButton").style.display = "inline-block";
 
     // Hide "Fight Monster" button
-    document.querySelector("button[onclick='fightMonster()']").style.display = "none";
+    //document.querySelector("button[onclick='fightMonster()']").style.display = "none";
 }
 
 function awardKillAchievements(monsterType) {
@@ -1434,7 +1517,7 @@ async function initSaves() {
 
   // kick off your normal startup
   checkStarterKitSelection();
-  updateInventoryDisplay();
+  updateInventory();
   selectMonster();
 }
 
@@ -1473,6 +1556,7 @@ function loadGameData() {
     // Update UI with the loaded data
     updateInventory();           // Update inventory UI
     renderEquipmentSlots();      // Update the equipment slots (weapon + armor)
+    renderEquipmentPanel();
     updateHealthBars(playerHP);  // Update the player's health bar
 }
 
@@ -1531,6 +1615,37 @@ document.addEventListener("keydown", (e) => {
   e.stopPropagation();
 })
 
+// ===== Battle Result Modal helpers =====
+const resultModal = document.getElementById('resultModal');
+const resultTitle = document.getElementById('resultTitle');
+const resultText  = document.getElementById('resultText');
+const resultPrimary   = document.getElementById('resultPrimary');   // OK
+const resultSecondary = document.getElementById('resultSecondary'); // Fight Again
+const modalBackdrop   = document.getElementById('modalBackdrop');
+
+function openResultModal(outcome, monsterName, dropName = null) {
+  // outcome: 'win' | 'lose'
+  const won = outcome === 'win';
+  resultTitle.textContent = won ? 'Victory!' : 'Defeated';
+  resultText.textContent  = won
+    ? `You defeated ${monsterName}!${dropName ? ' You found: ' + dropName + '.' : ''}`
+    : `You were defeated by ${monsterName}!`;
+
+  // wire buttons each time (simple and safe)
+  resultPrimary.onclick = closeResultModal; // OK just closes
+
+  // show
+  modalBackdrop.hidden = false;
+  resultModal.hidden = false;
+  document.body.classList.add('modal-open');
+}
+
+function closeResultModal() {
+  resultModal.hidden = true;
+  modalBackdrop.hidden = true;
+  document.body.classList.remove('modal-open');
+}
+
 // Checking onload
 window.onload = function() {
     checkStarterKitSelection();
@@ -1550,17 +1665,20 @@ window.onload = function() {
     }
 
     // Restore gathering cooldown
-    let savedTime = localStorage.getItem("gatherStartTime");
-    if (savedTime) {
-        let elapsedTime = Math.floor((Date.now() - savedTime) / 1000);
-        let remainingTime = gatherCooldown - elapsedTime;
-
-        if (remainingTime > 0) {
-            startGatherCooldown(remainingTime);
-        } else {
-            gatherButton.disabled = false;
-            gatherButton.innerText = "Gather";
-        }
+    const saved = parseInt(localStorage.getItem("gatherStartTime") || "0", 10);
+    if (saved) {
+    const elapsed = Math.floor((Date.now() - saved) / 1000);
+    const remaining = gatherCooldown - elapsed;
+    if (remaining > 0) {
+        startGatherCooldown(remaining);
+    } else {
+        gatherButton.disabled = false;
+        setGatherText("Gather");
+        localStorage.removeItem("gatherStartTime");
+    }
+    } else {
+    gatherButton.disabled = false;
+    setGatherText("Gather");
     }
 };
 

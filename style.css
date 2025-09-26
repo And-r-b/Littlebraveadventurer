@@ -206,9 +206,56 @@ body {
   font-size: 1.1rem;
 }
 
+#equipmentPanel{
+  background-color: rgba(0,0,0,0.8);
+  border: 2px solid white;
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
 
+#equipmentPanel h2{
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+#equipmentPanel .equip-slot{
+  display: flex;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+#equipmentPanel .label{
+  opacity: 0.8;
+}
+
+#equipmentPanel .equip-stats{
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+/* Buttons inside inventory lines */
+.inventory-item button{
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #fff;
+  background: #008cffcc;
+  color: #fff;
+  cursor: pointer;
+}
+.inventory-item button[disabled]{
+  opacity: .6;
+  cursor: not-allowed;
+}
   /* Inventory Item */
-  .inventory-item {
+.inventory-item {
     background: white;
     padding: 6px;
     border-radius: 5px;
@@ -684,6 +731,44 @@ body {
 body.modal-open {
   overflow: hidden;
 }
+
+/* === Battle Result Modal === */
+#resultModal[hidden] { display: none !important; }
+#resultModal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 520px;
+  width: min(90vw, 520px);
+  background: #1d2330;
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  z-index: 1001; /* above #modalBackdrop */
+  text-align: center;
+}
+
+#resultModal h2 { margin: 0 0 8px; }
+#resultModal p { margin: 8px 0 16px; }
+
+#resultModal .modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+#resultModal button {
+  background: #4CAF50;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 16px;
+}
+
+#resultModal button:hover { filter: brightness(1.05); }
 
 @media (max-height: 720px){
   :root{

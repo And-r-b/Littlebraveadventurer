@@ -20,8 +20,7 @@
 
   <!-- Game Content -->
   <div id="gameContent" style="display: none;">
-    <h1>Little Brave Adventurer</h1>
-    <p>Select a monster to fight:</p>
+    <h1>Select a monster to fight:</h1>
     <select id="monsterSelect" onchange="selectMonster()">
       <option value="Slime">Slime</option>
       <option value="Wolf">Wolf</option>
@@ -34,16 +33,6 @@
     <button onclick="fightMonster()" class="fight-button">Fight Monster</button>
     
     <p id="knightclass">Class: Knight</p>
-
-    <!-- Weapon Slot -->
-    <div id="weaponSlot" ondrop="drop(event, 'weapon')" ondragover="allowDrop(event)">
-      Weapon: None
-    </div>
-
-    <!-- Armor Slot -->
-    <div id="armorSlot" ondrop="drop(event, 'armor')" ondragover="allowDrop(event)">
-      Armor: None
-    </div>
 
     <p id="message"></p>
   <div class="button-row">
@@ -65,6 +54,21 @@
     <div class="game-layout">
       <!-- Inventory Section -->
       <div id="inventoryContainer" style="display: none;">
+          <div id="equipmentPanel">
+            <h2>Equipped</h2>
+            <div class="equip-slot">
+              <span class="label">Weapon</span>
+              <span id="equipPanelWeapon">None</span>
+            </div>
+            <div class="equip-slot">
+              <span class="label">Armor</span>
+              <span id="equipPanelArmor">None</span>
+            </div>
+            <div class="equip-stats">
+              <div>Attack: <span id="equipPanelAttack">5</span></div>
+              <div>Defense: <span id="equipPanelDefense">0</span></div>
+            </div>
+          </div>
           <div id="inventory">
               <h2>Inventory</h2>
           </div>
@@ -147,6 +151,14 @@
 
   <button onclick="startNewGame()">Reset Game</button>
   <button id="quitGameButton">Quit Game</button>
+</div>
+<!-- Battle Result Modal -->
+<div id="resultModal" hidden>
+  <h2 id="resultTitle">Result</h2>
+  <p id="resultText"></p>
+  <div class="modal-actions">
+    <button id="resultPrimary">OK</button>
+  </div>
 </div>
 </body>
 </html>
