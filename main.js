@@ -214,9 +214,9 @@ function onStartNewGameClick() {
 
 // Global variables and starter kit
 let equipment = {
-    weapon: "Wooden Sword",
+    weapon: "Stick",
     attack: 5,
-    armor: "None",  // Add armor slot here
+    armor: "Clothes",  // Add armor slot here
     defense: 0 // Add defense stat to track armor's effect
 };
 
