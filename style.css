@@ -225,9 +225,24 @@ body {
   padding: 10px;
   border-radius: 10px; /* Rounded edges */
   width: 200px;
-  max-height: fit-content;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
   color: white; /* Ensure text is visible */
   margin-right: 20px;
+}
+
+#inventoryContainer::-webkit-scrollbar {
+  width: 8px;            /* scrollbar width */
+}
+
+#inventoryContainer::-webkit-scrollbar-thumb {
+  background: #555;      /* scrollbar color */
+  border-radius: 4px;
+}
+
+#inventoryContainer::-webkit-scrollbar-thumb:hover {
+  background: #888;      /* color on hover */
 }
   
 #weapons, #armor {
