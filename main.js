@@ -264,6 +264,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+   const prayBtn = document.getElementById("prayButton");
+  if (prayBtn) {
+    prayBtn.innerHTML = `<span class="has-tip label" data-tip="${SKILL_DESCRIPTIONS['Pray']}">Pray</span>`;
+  }
 });
 
 function applySaveToState(save) {
@@ -796,6 +800,15 @@ const ITEM_DESCRIPTIONS = {
   "Strength Stew": "No description yet.",
 };
 
+// Descriptions for skills
+const SKILL_DESCRIPTIONS = {
+  "Pray": "Praying to a God Of Vigor to replenish 50 HP",
+  "Bulwark":"Stand proud with your shield and protect yourself",
+  "Acceleration": "You are swinging that sword like crazy",
+
+  // add more as you add skills
+};
+
 // Function to display weapons or armor in the UI
 function displayItems(itemCategory) {
     const container = document.getElementById('items-container');
@@ -1039,6 +1052,17 @@ function setGatherText(txt){
   if (label) label.textContent = txt;
   else document.getElementById('gatherButton').textContent = txt; // fallback
 }
+
+function setPrayLabel(txt){
+  const span = document.querySelector('#prayButton .label');
+  if (span) span.textContent = txt;
+  else {
+    // fallback if structure changes
+    const btn = document.getElementById('prayButton');
+    if (btn) btn.textContent = txt;
+  }
+}
+
 
 // Function to handle the gathering process (starts cooldown but delays rewards)
 function gatherResource() {
@@ -1390,8 +1414,7 @@ function usePray() {
     saveGameData();
 
     // Update the Pray button text to indicate it's in use
-    let prayButton = document.getElementById('prayButton');
-    prayButton.textContent = 'Praying...'; // Set text while praying
+    setPrayLabel('Praying...');
 
     // Save the initial time when prayer is used
     localStorage.setItem('prayStartTime', Date.now());
@@ -1421,7 +1444,7 @@ function startCooldown() {
                 prayCooldownActive = false; // Reset cooldown status
                 localStorage.setItem('prayCooldownActive', 'false'); // Update status in localStorage
                 document.getElementById('prayButton').disabled = false; // Enable the button
-                document.getElementById('prayButton').textContent = 'Pray'; // Reset the button text to 'Pray'
+                setPrayLabel('Pray'); // Reset the button text to 'Pray'
                 document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
 
                 // Reset the cooldown time for the next use
@@ -1711,7 +1734,7 @@ async function startNewGame() {
     const prayBtn = document.getElementById('prayButton');
     if (prayBtn) {
         prayBtn.disabled = false;
-        prayBtn.textContent = "Pray";
+        setPrayLabel('Pray');
     }
     const prayCd = document.getElementById('prayCooldown');
     if (prayCd) prayCd.style.display = 'none';

@@ -269,7 +269,7 @@ body {
   pointer-events: none;
   transform: translateY(6px);
   transition: opacity .16s ease, transform .16s ease;
-  z-index: 10;
+  z-index: 10000;
   white-space: normal;
 }
 
@@ -283,6 +283,7 @@ body {
   transform: translateY(2px);
   opacity: 0;
   transition: opacity .16s ease, transform .16s ease;
+  z-index: 10000;
 }
 
 .has-tip:hover::after,
@@ -596,6 +597,7 @@ body {
   color: white; /* Ensure text is visible */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Soft shadow */
   margin-right: 20px;
+  z-index: 5000;
 }
 
 /* Pray Button inside Skills Container */
