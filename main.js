@@ -113,15 +113,29 @@ let gameplayMusic;
 
 function setupGameplayMusic() {
     const musicEnabled = localStorage.getItem("musicEnabled") === "true";
+    if (!musicEnabled) return;
 
-    if (musicEnabled) {
-        gameplayMusic = new Audio("/sounds/gameplaymusic.mp3"); // put your gameplay music path here
-        gameplayMusic.loop = true;
-        gameplayMusic.volume = musicVolume;
-        gameplayMusic.play().catch((err) => {
-            console.warn("Gameplay music couldn't auto-play:", err);
-        });
+    if (gameplayMusic) {
+        gameplayMusic.pause();
+        gameplayMusic = null;
     }
+
+    gameplayMusic = new Audio(asset("sounds/gameplaymusic.mp3"));
+    gameplayMusic.loop = false; // don't loop automatically
+    gameplayMusic.volume = musicVolume;
+
+    gameplayMusic.addEventListener("ended", () => {
+        // wait 30 seconds before starting again
+        setTimeout(() => {
+            if (localStorage.getItem("musicEnabled") === "true") {
+                setupGameplayMusic();
+            }
+        }, 30000); // 30000 ms = 30 seconds
+    });
+
+    gameplayMusic.play().catch((err) => {
+        console.warn("Gameplay music couldn't auto-play:", err);
+    });
 }
 
 function stopGameplayMusic(fadeTime = 2000) {
@@ -1388,7 +1402,7 @@ function toggleCrafting() {
     // Hide other sections
     document.getElementById('skillsContainer').style.display = 'none';
     document.getElementById('inventoryContainer').style.display = 'none';
-    document.getElementById('settingsModal').style.display = 'none';
+    closeSettings();
     document.getElementById('lootContainer').style.display = 'none';
   
     // Toggle crafting interface
@@ -1449,7 +1463,7 @@ function renderCraftingUI() {
 
 // Gathering Process with Persistent Timer
 
-let gatherCooldown = 1; // 10 minutes in seconds
+let gatherCooldown = 600; // 10 minutes in seconds = 600
 let gatherButton = document.getElementById("gatherButton");
 let gatherLabel  = gatherButton.querySelector(".label");
 let messageElement = document.getElementById("message");
@@ -1818,7 +1832,7 @@ function updateInventory(newLoot = "") {
 function toggleInventory() {
     document.getElementById('skillsContainer').style.display = 'none';
     document.getElementById('craftingContainer').style.display = 'none';
-    document.getElementById('settingsModal').style.display = 'none';
+    closeSettings();
     document.getElementById('lootContainer').style.display = 'none';
     let inventoryContainer = document.getElementById("inventoryContainer");
     let body = document.body; // Get the body element (or any parent element)
@@ -2633,13 +2647,19 @@ function openSettings() {
   // Open Settings
   const modal = document.getElementById('settingsModal');
   const back  = document.getElementById('modalBackdrop');
-  if (modal) modal.hidden = false;
-  if (back)  back.hidden  = false;
+  if (modal) {
+    modal.style.display = '';   // <-- clear stale inline display:none
+    modal.hidden = false;
+  }
+  if (back) back.hidden = false;
 }
 
 function closeSettings() {
   const modal = document.getElementById('settingsModal');
-  if (modal) modal.hidden = true;
+  if (modal) {
+    modal.hidden = true;
+    modal.style.display = '';   // <-- ensure we never leave display:none behind
+  }
 
   // Keep backdrop if Skills or Result is still open
   const skillsOpen = document.getElementById('skillsModal')?.hidden === false;
