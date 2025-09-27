@@ -191,11 +191,18 @@ body {
     color: #fff;
   }
 
-  #inventory h2 {
+#inventory h2 {
     color: white;  /* Makes text visible */
     font-size: 1.5rem; /* Adjust text size */
     text-align: left; /* Align text to the left */
     margin-bottom: 10px; /* Adds spacing below the title */
+}
+
+#inventory h3 {
+  color: #ffd700;
+  font-size: 1.1rem;
+  margin: 8px 0 4px;
+  text-align: left;
 }
 
   /* Game Layout: Inventory (Left) + Fight Container (Right) */

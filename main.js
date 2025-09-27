@@ -1289,50 +1289,87 @@ function updateInventory(newLoot = "") {
     inventoryDiv.appendChild(newLootDiv);
   }
 
+  // 1) Collect into buckets
+  const categories = {
+    Weapons: [],
+    Armor: [],
+    Consumables: [],
+    Materials: []
+  };
+
   for (const item in inventory) {
     if (inventory[item] <= 0) continue;
 
-    const div = document.createElement("div");
-    div.className = "inventory-item";
-
-    // --- Consumable handling ---
     const recipe = craftingRecipes[item];
-    if (recipe && recipe.consumable === true) {
-      const tip = ITEM_DESCRIPTIONS[item] || "";
+    const kind = getEquipType(item); // "weapon" | "armor" | null
+
+    if (recipe?.consumable === true) {
+      categories.Consumables.push(item);
+    } else if (kind === "weapon") {
+      categories.Weapons.push(item);
+    } else if (kind === "armor") {
+      categories.Armor.push(item);
+    } else {
+      categories.Materials.push(item);
+    }
+  }
+
+  // 2) Helper to render one category section
+  const renderCategory = (title, items) => {
+    if (!items.length) return;
+
+    const h3 = document.createElement("h3");
+    h3.textContent = title;
+    inventoryDiv.appendChild(h3);
+
+    items.forEach((item) => {
+      const div = document.createElement("div");
+      div.className = "inventory-item";
+      const tip = (typeof ITEM_DESCRIPTIONS !== "undefined" && ITEM_DESCRIPTIONS[item]) ? ITEM_DESCRIPTIONS[item] : "";
+
+      // Consumables
+      if (craftingRecipes[item]?.consumable === true) {
+        div.innerHTML = `
+          <span class="has-tip" data-tip="${tip}">${item}</span>
+          <span class='quantity'>x${inventory[item]}</span>
+          <button onclick="useConsumable('${item}')">Use</button>
+        `;
+        inventoryDiv.appendChild(div);
+        return;
+      }
+
+      // Equippables
+      const kind = getEquipType(item);
+      if (kind) {
+        const equipped = isEquipped(item);
+        const btnText = equipped ? "Unequip" : "Equip";
+        div.innerHTML = `
+          <span class="has-tip" data-tip="${tip}">${item}${equipped ? " (equipped)" : ""}</span>
+          <span class='quantity'>x${inventory[item]}</span>
+          <button style="margin-left:8px" onclick="toggleEquip('${item}')">${btnText}</button>
+        `;
+        inventoryDiv.appendChild(div);
+        return;
+      }
+
+      // Plain materials
       div.innerHTML = `
         <span class="has-tip" data-tip="${tip}">${item}</span>
         <span class='quantity'>x${inventory[item]}</span>
-        <button onclick="useConsumable('${item}')">Use</button>
       `;
       inventoryDiv.appendChild(div);
-      continue; // skip further handling for this item
-    }
+    });
+  };
 
-    // --- Equipment handling (weapon/armor) ---
-    const kind = getEquipType(item);
-    if (!kind) {
-      // Plain material/loot
-      const tip = ITEM_DESCRIPTIONS[item] || "";
-      div.innerHTML = `
-        <span class="has-tip" data-tip="${tip}">${item}</span>
-        <span class='quantity'>x${inventory[item]}</span>
-      `;
-    } else {
-      const equipped = isEquipped(item);
-      const btnText = equipped ? "Unequip" : "Equip";
-      const tip = ITEM_DESCRIPTIONS[item] || "";
-      div.innerHTML = `
-        <span class="has-tip" data-tip="${tip}">${item}${equipped ? " (equipped)" : ""}</span>
-        <span class='quantity'>x${inventory[item]}</span>
-        <button style="margin-left:8px" onclick="toggleEquip('${item}')">${btnText}</button>
-      `;
-    }
-
-    inventoryDiv.appendChild(div);
-  }
+  // 3) Render sections in your preferred order
+  renderCategory("Weapons", categories.Weapons);
+  renderCategory("Armor", categories.Armor);
+  renderCategory("Consumables", categories.Consumables);
+  renderCategory("Materials", categories.Materials);
 
   renderEquipmentPanel();
 }
+
 
 // Toggle Inventory (Make Sure It Opens/Closes)
 function toggleInventory() {
