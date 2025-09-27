@@ -268,6 +268,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (prayBtn) {
     prayBtn.innerHTML = `<span class="has-tip label" data-tip="${SKILL_DESCRIPTIONS['Pray']}">Pray</span>`;
   }
+
+   const setSkillTooltip = (id, name) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = `<span class="has-tip label" data-tip="${SKILL_DESCRIPTIONS[name]}">${name}</span>`;
+  };
+
+  setSkillTooltip('bulwarkButton',  'Bulwark');
+  setSkillTooltip('accelButton',    'Acceleration');
+  setSkillTooltip('empowerButton',  'Empower');
 });
 
 function applySaveToState(save) {
@@ -317,7 +327,7 @@ async function continueFromMenu() {
   if (!save) return;
 
   applySaveToState(save); // your helper that hydrates playerHP, equipment, inventory, settings
-
+  resumeSkillsFromSave(save.skills || JSON.parse(localStorage.getItem("saveSkills") || "{}"));
   // show game
   document.getElementById('mainMenu').style.display = 'none';
   document.getElementById('starterSelection').style.display = 'none';
@@ -802,9 +812,10 @@ const ITEM_DESCRIPTIONS = {
 
 // Descriptions for skills
 const SKILL_DESCRIPTIONS = {
-  "Pray": "Praying to a God Of Vigor to replenish 50 HP",
-  "Bulwark":"Stand proud with your shield and protect yourself",
-  "Acceleration": "You are swinging that sword like crazy",
+  "Pray": "Pray to regain 50 HP instantly.",
+  "Bulwark":"Raise your guard, halving incoming damage for 30s.",
+  "Acceleration": "Act twice each second for 15s.",
+  "Empower": "Gain +10 attack for 20s.",
 
   // add more as you add skills
 };
@@ -1455,6 +1466,265 @@ function startCooldown() {
     }
 }
 
+// ==== Bulwark / Acceleration / Empower ====
+
+let bulwarkActive = false;
+let accelActive   = false;
+let empowerActive = false;
+
+// Skill deadlines (ms since epoch). 0 = none
+let bulwarkActiveUntil = 0, bulwarkCooldownUntil = 0;
+let accelActiveUntil   = 0, accelCooldownUntil   = 0;
+let empowerActiveUntil = 0, empowerCooldownUntil = 0;
+
+// Durations
+const BULWARK_DURATION = 30;  // seconds (50% incoming damage)
+const ACCEL_DURATION   = 15;  // seconds (attack twice each tick)
+const EMPOWER_DURATION = 20;  // seconds (+10 attack)
+
+// Cooldowns
+let bulwarkCDLeft = 120, bulwarkCDBase = 120; // 2 min
+let accelCDLeft   = 90,  accelCDBase   = 90;  // 1.5 min
+let empowerCDLeft = 60,  empowerCDBase = 60;  // 1 min
+
+let bulwarkTimer = null, accelTimer = null, empowerTimer = null;
+let bulwarkCDT = null, accelCDT = null, empowerCDT = null;
+
+// ---- helpers
+function startCountdown(seconds, onTick, onDone) {
+  let left = seconds;
+  onTick(left);
+  const t = setInterval(() => {
+    left--;
+    if (left > 0) onTick(left);
+    else { clearInterval(t); onDone(); }
+  }, 1000);
+  return t;
+}
+
+function setSkillUI(idBtn, idCd, enabled, text, showCd, cdText) {
+  const btn = document.getElementById(idBtn);
+  const cd  = document.getElementById(idCd);
+
+  if (btn) {
+    btn.disabled = !enabled;
+    const lbl = btn.querySelector('.label');
+    if (lbl) lbl.textContent = text;     // keep tooltip wrapper
+    else btn.textContent = text;         // fallback if wrapper missing
+  }
+
+  if (cd) {
+    cd.style.display = showCd ? 'inline' : 'none';
+    if (cdText) cd.textContent = cdText;
+  }
+}
+
+// ---- Bulwark (50% damage taken for 30s)
+function useBulwark() {
+  if (bulwarkActive || bulwarkCDT) return;
+
+  const now = Date.now();
+  bulwarkActive = true;
+  bulwarkActiveUntil = now + BULWARK_DURATION * 1000;
+
+  setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark (Active)', true, 'Bulwark active');
+
+  bulwarkTimer = startCountdown(BULWARK_DURATION, () => {}, () => {
+    bulwarkActive = false;
+
+    bulwarkCooldownUntil = Date.now() + bulwarkCDBase * 1000;
+    bulwarkCDT = startCountdown(bulwarkCDBase, (s) => {
+      setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark', true, `Bulwark cooldown: ${s}s`);
+    }, () => {
+      bulwarkCDT = null;
+      bulwarkCooldownUntil = 0;
+      setSkillUI('bulwarkButton','bulwarkCooldown', true, 'Bulwark', false);
+      saveGameData();
+    });
+    saveGameData();
+  });
+
+  saveGameData();
+}
+
+// ---- Acceleration (attack twice per tick for 15s)
+function useAcceleration() {
+  if (accelActive || accelCDT) return;
+
+  const now = Date.now();
+  accelActive = true;
+  accelActiveUntil = now + ACCEL_DURATION * 1000;
+
+  setSkillUI('accelButton','accelCooldown', false, 'Acceleration (Active)', true, 'Acceleration active');
+
+  accelTimer = startCountdown(ACCEL_DURATION, () => {}, () => {
+    accelActive = false;
+
+    accelCooldownUntil = Date.now() + accelCDBase * 1000;
+    accelCDT = startCountdown(accelCDBase, (s) => {
+      setSkillUI('accelButton','accelCooldown', false, 'Acceleration', true, `Acceleration cooldown: ${s}s`);
+    }, () => {
+      accelCDT = null;
+      accelCooldownUntil = 0;
+      setSkillUI('accelButton','accelCooldown', true, 'Acceleration', false);
+      saveGameData();
+    });
+    saveGameData();
+  });
+
+  saveGameData();
+}
+
+// ---- Empower (+10 attack for 20s)
+function useEmpower() {
+  if (empowerActive || empowerCDT) return;
+
+  const now = Date.now();
+  empowerActive = true;
+  empowerActiveUntil = now + EMPOWER_DURATION * 1000;
+
+  setSkillUI('empowerButton','empowerCooldown', false, 'Empower (Active)', true, 'Empower active');
+
+  empowerTimer = startCountdown(EMPOWER_DURATION, () => {}, () => {
+    empowerActive = false;
+
+    empowerCooldownUntil = Date.now() + empowerCDBase * 1000;
+    empowerCDT = startCountdown(empowerCDBase, (s) => {
+      setSkillUI('empowerButton','empowerCooldown', false, 'Empower', true, `Empower cooldown: ${s}s`);
+    }, () => {
+      empowerCDT = null;
+      empowerCooldownUntil = 0;
+      setSkillUI('empowerButton','empowerCooldown', true, 'Empower', false);
+      saveGameData();
+    });
+    saveGameData();
+  });
+
+  saveGameData();
+
+}
+
+function resumeSkillsFromSave(savedSkills = {}) {
+  const now = Date.now();
+
+  // clear old timers
+  if (bulwarkTimer) clearInterval(bulwarkTimer);
+  if (bulwarkCDT)   clearInterval(bulwarkCDT);
+  if (accelTimer)   clearInterval(accelTimer);
+  if (accelCDT)     clearInterval(accelCDT);
+  if (empowerTimer) clearInterval(empowerTimer);
+  if (empowerCDT)   clearInterval(empowerCDT);
+
+  // restore timestamps
+  bulwarkActiveUntil   = savedSkills.bulwarkActiveUntil   || 0;
+  bulwarkCooldownUntil = savedSkills.bulwarkCooldownUntil || 0;
+  accelActiveUntil     = savedSkills.accelActiveUntil     || 0;
+  accelCooldownUntil   = savedSkills.accelCooldownUntil   || 0;
+  empowerActiveUntil   = savedSkills.empowerActiveUntil   || 0;
+  empowerCooldownUntil = savedSkills.empowerCooldownUntil || 0;
+
+  // Bulwark
+  if (bulwarkActiveUntil > now) {
+    bulwarkActive = true;
+    const left = Math.ceil((bulwarkActiveUntil - now)/1000);
+    setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark (Active)', true, 'Bulwark active');
+    bulwarkTimer = startCountdown(left, () => {}, () => {
+      bulwarkActive = false;
+      const cdLeft = Math.max(0, Math.ceil((bulwarkCooldownUntil - Date.now())/1000));
+      if (cdLeft > 0) {
+        bulwarkCDT = startCountdown(cdLeft, (s) => {
+          setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark', true, `Bulwark cooldown: ${s}s`);
+        }, () => {
+          bulwarkCDT = null; bulwarkCooldownUntil = 0;
+          setSkillUI('bulwarkButton','bulwarkCooldown', true, 'Bulwark', false);
+          saveGameData();
+        });
+      } else setSkillUI('bulwarkButton','bulwarkCooldown', true, 'Bulwark', false);
+    });
+  } else {
+    bulwarkActive = false;
+    const cdLeft = Math.max(0, Math.ceil((bulwarkCooldownUntil - now)/1000));
+    if (cdLeft > 0) {
+      setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark', true, `Bulwark cooldown: ${cdLeft}s`);
+      bulwarkCDT = startCountdown(cdLeft, (s) => {
+        setSkillUI('bulwarkButton','bulwarkCooldown', false, 'Bulwark', true, `Bulwark cooldown: ${s}s`);
+      }, () => {
+        bulwarkCDT = null; bulwarkCooldownUntil = 0;
+        setSkillUI('bulwarkButton','bulwarkCooldown', true, 'Bulwark', false);
+        saveGameData();
+      });
+    } else setSkillUI('bulwarkButton','bulwarkCooldown', true, 'Bulwark', false);
+  }
+
+  // Acceleration
+  if (accelActiveUntil > now) {
+    accelActive = true;
+    const left = Math.ceil((accelActiveUntil - now)/1000);
+    setSkillUI('accelButton','accelCooldown', false, 'Acceleration (Active)', true, 'Acceleration active');
+    accelTimer = startCountdown(left, () => {}, () => {
+      accelActive = false;
+      const cdLeft = Math.max(0, Math.ceil((accelCooldownUntil - Date.now())/1000));
+      if (cdLeft > 0) {
+        accelCDT = startCountdown(cdLeft, (s) => {
+          setSkillUI('accelButton','accelCooldown', false, 'Acceleration', true, `Acceleration cooldown: ${s}s`);
+        }, () => {
+          accelCDT = null; accelCooldownUntil = 0;
+          setSkillUI('accelButton','accelCooldown', true, 'Acceleration', false);
+          saveGameData();
+        });
+      } else setSkillUI('accelButton','accelCooldown', true, 'Acceleration', false);
+    });
+  } else {
+    accelActive = false;
+    const cdLeft = Math.max(0, Math.ceil((accelCooldownUntil - now)/1000));
+    if (cdLeft > 0) {
+      setSkillUI('accelButton','accelCooldown', false, 'Acceleration', true, `Acceleration cooldown: ${cdLeft}s`);
+      accelCDT = startCountdown(cdLeft, (s) => {
+        setSkillUI('accelButton','accelCooldown', false, 'Acceleration', true, `Acceleration cooldown: ${s}s`);
+      }, () => {
+        accelCDT = null; accelCooldownUntil = 0;
+        setSkillUI('accelButton','accelCooldown', true, 'Acceleration', false);
+        saveGameData();
+      });
+    } else setSkillUI('accelButton','accelCooldown', true, 'Acceleration', false);
+  }
+
+  // Empower
+  if (empowerActiveUntil > now) {
+    empowerActive = true;
+    const left = Math.ceil((empowerActiveUntil - now)/1000);
+    setSkillUI('empowerButton','empowerCooldown', false, 'Empower (Active)', true, 'Empower active');
+    empowerTimer = startCountdown(left, () => {}, () => {
+      empowerActive = false;
+      const cdLeft = Math.max(0, Math.ceil((empowerCooldownUntil - Date.now())/1000));
+      if (cdLeft > 0) {
+        empowerCDT = startCountdown(cdLeft, (s) => {
+          setSkillUI('empowerButton','empowerCooldown', false, 'Empower', true, `Empower cooldown: ${s}s`);
+        }, () => {
+          empowerCDT = null; empowerCooldownUntil = 0;
+          setSkillUI('empowerButton','empowerCooldown', true, 'Empower', false);
+          saveGameData();
+        });
+      } else setSkillUI('empowerButton','empowerCooldown', true, 'Empower', false);
+    });
+  } else {
+    empowerActive = false;
+    const cdLeft = Math.max(0, Math.ceil((empowerCooldownUntil - now)/1000));
+    if (cdLeft > 0) {
+      setSkillUI('empowerButton','empowerCooldown', false, 'Empower', true, `Empower cooldown: ${cdLeft}s`);
+      empowerCDT = startCountdown(cdLeft, (s) => {
+        setSkillUI('empowerButton','empowerCooldown', false, 'Empower', true, `Empower cooldown: ${s}s`);
+      }, () => {
+        empowerCDT = null; empowerCooldownUntil = 0;
+        setSkillUI('empowerButton','empowerCooldown', true, 'Empower', false);
+        saveGameData();
+      });
+    } else setSkillUI('empowerButton','empowerCooldown', true, 'Empower', false);
+  }
+}
+
+
+
 function updateCooldownDisplay() {
     document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`;
 }
@@ -1588,85 +1858,78 @@ function resetMonsterBar(monsterName) {
 // Fighting Function
 
 function fightMonster() {
-    let selectedMonster = document.getElementById("monsterSelect").value;
+  const selectedMonster = document.getElementById("monsterSelect").value;
 
-    // Clear any previous message before starting the fight
-    document.getElementById("message").innerText = "";
+  document.getElementById("message").innerText = "";
 
-    // Create a fresh copy of the monster's stats each time the fight starts
-    let monster = { ...monsters[selectedMonster] }; // New copy of monster with full health
+  // Fresh copy of the selected monster
+  let monster = { ...monsters[selectedMonster] };
+  monster.hp = monsters[selectedMonster].hp;
 
-    // Make sure the monster's health is reset to its max
-    monster.hp = monsters[selectedMonster].hp;
+  const battleInterval = setInterval(() => {
+    // ===== Player attacks =====
+    // Empower: +10 to attack while active
+    const baseAtk = (equipment.attack || 0) + (empowerActive ? 10 : 0);
+    let playerDamage = Math.floor(Math.random() * Math.max(1, baseAtk)) + 1;
+    monster.hp -= playerDamage;
 
-    // Set up the interval for the fight (simulate ticks)
-    let battleInterval = setInterval(() => {
-        // Player attacks
-        let playerDamage = Math.floor(Math.random() * equipment.attack) + 1; // Random damage based on player's attack power
-        monster.hp -= playerDamage; // Decrease monster's HP
+    // Acceleration: second swing while active
+    if (accelActive && monster.hp > 0) {
+      const extra = Math.floor(Math.random() * Math.max(1, baseAtk)) + 1;
+      monster.hp -= extra;
+    }
 
-        // Ensure monster HP doesn't go below 0
-        if (monster.hp < 0) monster.hp = 0;
+    if (monster.hp < 0) monster.hp = 0;
 
-        // Update the health bars after the player's attack
-        updateHealthBars(playerHP, monster, selectedMonster);
+    updateHealthBars(playerHP, monster, selectedMonster); // <-- bug fixed (was selectMonster)
 
-        // Check if the monster is defeated
-        if (monster.hp === 0) {
-            // Display victory message and drop item
-            let drop = monster.drops[Math.floor(Math.random() * monster.drops.length)]; // Random drop from the monster
-            openResultModal('win', selectedMonster, drop);
-            if (inventory[drop]) {
-                inventory[drop] += 1; // Increase the count of the drop in inventory
-            } else {
-                inventory[drop] = 1; // Add the drop to inventory
-            }
-            updateInventory(); // Update the displayed inventory
+    // Monster defeated?
+    if (monster.hp === 0) {
+      const drop = monster.drops[Math.floor(Math.random() * monster.drops.length)];
+      openResultModal('win', selectedMonster, drop);
 
-            // Save the game data after the battle
-            saveGameData();
+      // loot
+      inventory[drop] = (inventory[drop] || 0) + 1;
+      updateInventory();
 
-            // Stop the battle once the monster is defeated
-            clearInterval(battleInterval);
+      saveGameData();
+      clearInterval(battleInterval);
 
-            monster.hp = monsters[selectedMonster].hp;   // refresh model
-            resetMonsterBar(selectedMonster);
-            
+      // refresh UI bar and achievements
+      monster.hp = monsters[selectedMonster].hp;
+      resetMonsterBar(selectedMonster);
+      awardKillAchievements(selectedMonster);
+      return;
+    }
 
-            awardKillAchievements(selectedMonster);
-            return; // Exit the interval callback function
-        }
+    // ===== Monster attacks =====
+    const monsterDamage =
+      Math.floor(Math.random() * (monster.attack[1] - monster.attack[0] + 1)) + monster.attack[0];
 
-        // Monster attacks
-        let monsterDamage = Math.floor(Math.random() * (monster.attack[1] - monster.attack[0] + 1)) + monster.attack[0];
+    // Defense first
+    let effectiveDamage = Math.max(0, monsterDamage - (equipment.defense || 0));
 
-        // Apply defense: Subtract the player's defense from the monster's damage
-        let effectiveDamage = Math.max(0, monsterDamage - equipment.defense); // Ensure damage isn't negative
+    // Bulwark: halve incoming damage while active (set to 0 for full nullification)
+    if (bulwarkActive) {
+      effectiveDamage = Math.floor(effectiveDamage * 0.5);
+      // For full immunity instead: effectiveDamage = 0;
+    }
 
-        playerHP -= effectiveDamage; // Decrease player's HP based on effective damage after defense
+    playerHP -= effectiveDamage;
 
-        updateHealthBars(playerHP, monster, selectMonster);
-        saveGameData();
-        // Check if the player is defeated
-        if (playerHP <= 0) {
-            playerHP = 0; // Ensure HP is set to 0 if the player is defeated
-            openResultModal('lose', selectedMonster);
+    updateHealthBars(playerHP, monster, selectedMonster);
+    saveGameData();
 
-            // Save the game data after the battle (even if the player loses)
-            saveGameData();
+    // Player defeated?
+    if (playerHP <= 0) {
+      playerHP = 0;
+      openResultModal('lose', selectedMonster);
+      saveGameData();
+      clearInterval(battleInterval);
+      return;
+    }
 
-            // Stop the battle once the player is defeated
-            clearInterval(battleInterval);
-            return; // Exit the interval callback function
-        }
-
-    }, 1000); // Run the battle tick every second (1000 milliseconds)
-
-    // Show the "Play Again" button after the battle is over
-    //document.getElementById("playAgainButton").style.display = "inline-block";
-
-    // Hide "Fight Monster" button
-    //document.querySelector("button[onclick='fightMonster()']").style.display = "none";
+  }, 1000); // 1s ticks
 }
 
 function awardKillAchievements(monsterType) {
@@ -1784,10 +2047,16 @@ async function saveGameData() {
       soundEnabled: localStorage.getItem("soundEnabled") === "true",
       musicVolume: parseFloat(localStorage.getItem("musicVolume")) || 0.3,
       sfxVolume: parseFloat(localStorage.getItem("sfxVolume")) || 0.3
+    },
+    skills: {
+      bulwarkActiveUntil, bulwarkCooldownUntil,
+      accelActiveUntil,   accelCooldownUntil,
+      empowerActiveUntil, empowerCooldownUntil, 
     }
   };
 
   if (window.saveAPI?.save) await window.saveAPI.save(save);
+  try { localStorage.setItem("saveSkills", JSON.stringify(data.skills)); } catch {}
 }
 
 window.addEventListener('beforeunload', () => {
@@ -1829,6 +2098,7 @@ async function initSaves() {
 
   // kick off your normal startup
   updateHealthBars(playerHP); // ✅ make the UI show saved HP immediately
+  resumeSkillsFromSave(fileSave.skills || JSON.parse(localStorage.getItem("saveSkills") || "{}"));
 }
 
 
@@ -2018,6 +2288,9 @@ Object.assign(window, {
   // gameplay actions
   gatherResource,
   usePray,
+  useBulwark,
+  useAcceleration,
+  useEmpower,
 
   // crafting (only if called from HTML)
   renderCraftingUI,
