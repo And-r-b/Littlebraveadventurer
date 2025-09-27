@@ -1079,6 +1079,156 @@ const ITEM_ICONS = {
   "Strength Stew": "images/items/fox-hat.png",
 };
 
+// === SKILL DEFINITIONS ===
+const SKILL_DEFS = {
+  Pray: {
+    icon: "icons/png/Skills.png",
+    desc: "Heal 50 HP instantly. Cooldown: 5 min",
+    duration: 0,       // instant
+    cooldown: 300,     // seconds
+    use: () => {
+      const before = playerHP;
+      playerHP = Math.min(100, playerHP + 50);
+      updatePlayerHPUI?.();
+      if (playerHP > before) playSound?.("sounds/heal.mp3");
+      // start cooldown timestamp
+      prayCooldownUntil = Date.now() + (SKILL_DEFS.Pray.cooldown * 1000);
+    },
+    getState: () => {
+      const now = Date.now();
+      const cdLeft = Math.max(0, Math.ceil((prayCooldownUntil - now) / 1000 || 0));
+      return { activeLeft: 0, cdLeft };
+    }
+  },
+
+  Bulwark: {
+    icon: "icons/png/Skills.png",
+    desc: "Halve incoming damage. Duration: 30s. CD: 120s",
+    duration: 30,
+    cooldown: 120,
+    use: () => {
+      const now = Date.now();
+      bulwarkActiveUntil = now + (SKILL_DEFS.Bulwark.duration * 1000);
+      bulwarkCooldownUntil = now + (SKILL_DEFS.Bulwark.cooldown * 1000);
+    },
+    getState: () => {
+      const now = Date.now();
+      const activeLeft = Math.max(0, Math.ceil((bulwarkActiveUntil - now) / 1000 || 0));
+      const cdLeft     = Math.max(0, Math.ceil((bulwarkCooldownUntil - now) / 1000 || 0));
+      return { activeLeft, cdLeft };
+    }
+  },
+
+  Acceleration: {
+    icon: "icons/png/Skills.png",
+    desc: "Gain an extra attack each tick. Dur: 15s. CD: 90s",
+    duration: 15,
+    cooldown: 90,
+    use: () => {
+      const now = Date.now();
+      accelActiveUntil = now + (SKILL_DEFS.Acceleration.duration * 1000);
+      accelCooldownUntil = now + (SKILL_DEFS.Acceleration.cooldown * 1000);
+    },
+    getState: () => {
+      const now = Date.now();
+      const activeLeft = Math.max(0, Math.ceil((accelActiveUntil - now) / 1000 || 0));
+      const cdLeft     = Math.max(0, Math.ceil((accelCooldownUntil - now) / 1000 || 0));
+      return { activeLeft, cdLeft };
+    }
+  },
+
+  Empower: {
+    icon: "icons/png/Skills.png",
+    desc: "+10 Attack. Duration: 20s. CD: 60s",
+    duration: 20,
+    cooldown: 60,
+    use: () => {
+      const now = Date.now();
+      empowerActiveUntil = now + (SKILL_DEFS.Empower.duration * 1000);
+      empowerCooldownUntil = now + (SKILL_DEFS.Empower.cooldown * 1000);
+      // If your attack calc reads empowerActiveUntil elsewhere, no extra code needed here
+    },
+    getState: () => {
+      const now = Date.now();
+      const activeLeft = Math.max(0, Math.ceil((empowerActiveUntil - now) / 1000 || 0));
+      const cdLeft     = Math.max(0, Math.ceil((empowerCooldownUntil - now) / 1000 || 0));
+      return { activeLeft, cdLeft };
+    }
+  },
+};
+
+function mmss(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec < 10 ? "0" : ""}${sec}`;
+}
+
+function renderSkills() {
+  const wrap = document.getElementById("skillsBody");
+  if (!wrap) return;
+
+  wrap.innerHTML = "";
+
+  Object.keys(SKILL_DEFS).forEach((name) => {
+    const def = SKILL_DEFS[name];
+    const { activeLeft, cdLeft } = def.getState();
+
+    const card = document.createElement("div");
+    card.className = "skill-card";
+    card.innerHTML = `
+      <img class="skill-icon" src="${def.icon}" alt="${name}">
+      <div class="skill-info">
+        <h3>${name}</h3>
+        <p>${def.desc}</p>
+      </div>
+      <span id="${name}-status" class="skill-status">
+        ${activeLeft > 0 ? `Active ${mmss(activeLeft)}` :
+          cdLeft > 0 ? `CD ${mmss(cdLeft)}` : `Ready`}
+      </span>
+      <button id="${name}-btn" ${cdLeft > 0 || activeLeft > 0 ? "disabled" : ""} onclick="useSkill('${name}')">Use</button>
+    `;
+    wrap.appendChild(card);
+
+    startSkillTicker(name);
+  });
+}
+
+function startSkillTicker(name) {
+  const def = SKILL_DEFS[name];
+  const status = document.getElementById(`${name}-status`);
+  const btn = document.getElementById(`${name}-btn`);
+  if (!status || !btn) return;
+
+  const t = setInterval(() => {
+    const { activeLeft, cdLeft } = def.getState();
+    if (activeLeft > 0) {
+      status.textContent = `Active ${mmss(activeLeft)}`;
+      btn.disabled = true;
+      return;
+    }
+    if (cdLeft > 0) {
+      status.textContent = `CD ${mmss(cdLeft)}`;
+      btn.disabled = true;
+      return;
+    }
+    status.textContent = "Ready";
+    btn.disabled = false;
+    clearInterval(t);
+  }, 1000);
+}
+
+window.useSkill = function(name) {
+  const def = SKILL_DEFS[name];
+  if (!def) return;
+  const { activeLeft, cdLeft } = def.getState();
+  if (activeLeft > 0 || cdLeft > 0) return; // safety
+
+  def.use();
+  saveGameData?.();        // persist new timers
+  renderSkills();          // refresh the cards
+  renderBuffBar();
+};
+
 // Fallback icon element if image missing
 function iconEl(name){
   const path = ITEM_ICONS[name];
@@ -1685,115 +1835,14 @@ function toggleInventory() {
 // Toggle Skill button
 
 function toggleSkills() {
-    // Hide other menus
-    document.getElementById('inventoryContainer').style.display = 'none';
-    document.getElementById('craftingContainer').style.display = 'none';
-    document.getElementById('settingsModal').style.display = 'none';
-    document.getElementById('lootContainer').style.display = 'none';
+  const modal = document.getElementById('skillsModal');
+  if (!modal) return;
 
-    let skillsContainer = document.getElementById('skillsContainer');
-    
-    // Toggle visibility
-    if (skillsContainer.style.display === 'none') {
-        skillsContainer.style.display = 'block';
-    } else {
-        skillsContainer.style.display = 'none';
-    }
-}
-
-// Skill Pray - Healing 50 HP - Cooldown of 5 minutes
-
-let prayCooldownActive = false;
-let prayCooldownTime = 300; // 5 minutes in seconds
-let initialPrayCooldownTime = prayCooldownTime; // Store the original cooldown time
-let cooldownInterval; // Track the interval to prevent multiple intervals
-
-// When the game loads, check if there's a saved cooldown state in localStorage
-window.addEventListener('load', function () {
-    if (localStorage.getItem('prayCooldownTime') && localStorage.getItem('prayCooldownActive') === 'true') {
-        prayCooldownTime = parseInt(localStorage.getItem('prayCooldownTime'));
-        prayCooldownActive = true;
-        document.getElementById('prayButton').disabled = true; // Disable the button
-        document.getElementById('prayCooldown').style.display = 'inline'; // Show cooldown message
-        updateCooldownDisplay();
-        startCooldown();
-        if (isGameVisible()) selectMonster();
-    }
-});
-
-// Listen for visibility changes (tab switching or browser focus change)
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        // When the game loses focus, save the current cooldown time to localStorage
-        localStorage.setItem('prayCooldownTime', prayCooldownTime);
-        localStorage.setItem('prayCooldownActive', prayCooldownActive.toString());
-    } else {
-        // When the game regains focus, continue the cooldown
-        if (prayCooldownActive) {
-            // Don't start a new interval if it's already running
-            if (!cooldownInterval) {
-                startCooldown();
-            }
-        }
-    }
-});
-
-function usePray() {
-    if (prayCooldownActive) return; // Prevent multiple activations
-
-    prayCooldownActive = true;
-    document.getElementById('prayButton').disabled = true; // Disable the button
-    document.getElementById('prayCooldown').style.display = 'inline'; // Show the cooldown message
-
-    // Start healing
-    playerHP = Math.min(playerHP + 50, 100); // Heal but not over max HP
-    updateHealthBars(playerHP); // Update health bars
-
-    // Save HP to localStorage to persist after refresh
-    localStorage.setItem('playerHP', playerHP);
-
-    saveGameData();
-
-    // Update the Pray button text to indicate it's in use
-    setPrayLabel('Praying...');
-
-    // Save the initial time when prayer is used
-    localStorage.setItem('prayStartTime', Date.now());
-
-    // Start the cooldown and update the timer every second
-    startCooldown();
-}
-
-function startCooldown() {
-    // If the start time exists, calculate the elapsed time
-    const startTime = localStorage.getItem('prayStartTime');
-    if (startTime) {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000); // Calculate elapsed time in seconds
-        prayCooldownTime = Math.max(initialPrayCooldownTime - elapsed, 0); // Ensure cooldown doesn't go negative
-    }
-
-    // Only start the interval if it's not already running
-    if (!cooldownInterval) {
-        cooldownInterval = setInterval(() => {
-            if (prayCooldownTime > 0) {
-                prayCooldownTime--; // Decrease the cooldown time by 1 second
-                updateCooldownDisplay();
-                localStorage.setItem('prayCooldownTime', prayCooldownTime); // Store updated time in localStorage
-            } else {
-                clearInterval(cooldownInterval); // Stop the timer when it's done
-                cooldownInterval = null; // Reset the interval tracker
-                prayCooldownActive = false; // Reset cooldown status
-                localStorage.setItem('prayCooldownActive', 'false'); // Update status in localStorage
-                document.getElementById('prayButton').disabled = false; // Enable the button
-                setPrayLabel('Pray'); // Reset the button text to 'Pray'
-                document.getElementById('prayCooldown').style.display = 'none'; // Hide cooldown message
-
-                // Reset the cooldown time for the next use
-                prayCooldownTime = initialPrayCooldownTime;
-                localStorage.removeItem('prayStartTime'); // Remove start time
-            }
-        }, 1000); // Update every second
-    }
+  if (modal.hidden) {
+    openSkillsModal();   // show modal + backdrop + render cards
+  } else {
+    closeSkillsModal();  // hide modal + backdrop
+  }
 }
 
 // ==== Bulwark / Acceleration / Empower ====
@@ -1806,6 +1855,7 @@ let empowerActive = false;
 let bulwarkActiveUntil = 0, bulwarkCooldownUntil = 0;
 let accelActiveUntil   = 0, accelCooldownUntil   = 0;
 let empowerActiveUntil = 0, empowerCooldownUntil = 0;
+let prayCooldownUntil  = 0;
 
 // Durations
 const BULWARK_DURATION = 30;  // seconds (50% incoming damage)
@@ -1952,6 +2002,7 @@ function resumeSkillsFromSave(savedSkills = {}) {
   accelCooldownUntil   = savedSkills.accelCooldownUntil   || 0;
   empowerActiveUntil   = savedSkills.empowerActiveUntil   || 0;
   empowerCooldownUntil = savedSkills.empowerCooldownUntil || 0;
+  prayCooldownUntil    = savedSkills.prayCooldownUntil    || 0;
 
   // Bulwark
   if (bulwarkActiveUntil > now) {
@@ -2053,11 +2104,6 @@ function resumeSkillsFromSave(savedSkills = {}) {
   }
 }
 
-
-
-function updateCooldownDisplay() {
-    document.getElementById('prayCooldown').textContent = `Pray is on cooldown: ${prayCooldownTime}s`;
-}
 
 // ---- Settings: show/hide & UI sync ----
 function syncSettingsUIFromStorage() {
@@ -2385,11 +2431,12 @@ async function saveGameData() {
       bulwarkActiveUntil, bulwarkCooldownUntil,
       accelActiveUntil,   accelCooldownUntil,
       empowerActiveUntil, empowerCooldownUntil, 
+      prayCooldownUntil,
     }
   };
 
   if (window.saveAPI?.save) await window.saveAPI.save(save);
-  try { localStorage.setItem("saveSkills", JSON.stringify(data.skills)); } catch {}
+  try { localStorage.setItem("saveSkills", JSON.stringify(save.skills)); } catch {}
 }
 
 window.addEventListener('beforeunload', () => {
@@ -2402,9 +2449,13 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('load', initSaves);
 
 async function initSaves() {
+  let loaded = null; // <-- hoisted so we can read it after try/catch
+
   try {
     const fileSave = await window.saveAPI?.load?.();
     if (fileSave) {
+      loaded = fileSave; // <-- keep a reference for later
+
       // hydrate localStorage so your old code still works
       localStorage.setItem("starterKit", fileSave.starterKit || '');
       localStorage.setItem("playerHP", String(fileSave.playerHP ?? 100));
@@ -2418,7 +2469,7 @@ async function initSaves() {
       localStorage.setItem("sfxVolume", String(s.sfxVolume ?? 0.3));
 
       // hydrate globals
-      playerHP = fileSave.playerHP ?? 100;
+      playerHP  = fileSave.playerHP ?? 100;
       equipment = fileSave.equipment || equipment;
       inventory = fileSave.inventory || inventory;
     } else {
@@ -2429,9 +2480,16 @@ async function initSaves() {
     console.warn("initSaves failed, fallback to localStorage only:", e);
   }
 
-  // kick off your normal startup
-  updateHealthBars(playerHP); // ✅ make the UI show saved HP immediately
-  resumeSkillsFromSave(fileSave.skills || JSON.parse(localStorage.getItem("saveSkills") || "{}"));
+  // Kick off normal startup (guard if helpers don't exist yet)
+  try { updateHealthBars?.(playerHP); } catch {}
+
+  // Resume skills: prefer cloud save (loaded), fallback to localStorage mirror
+  const savedSkills =
+    loaded?.skills ??
+    JSON.parse(localStorage.getItem("saveSkills") || "{}");
+
+  try { resumeSkillsFromSave?.(savedSkills); } catch {}
+  renderBuffBar();
 }
 
 
@@ -2495,31 +2553,154 @@ function updateSelectionStatus(){
 }
 
 
-function openSettings() {
-  othersToHide.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = "none";
+let buffTicker = null;
+
+function mmss(s){
+  const m = Math.floor(s/60), sec = s%60;
+  return `${m}:${sec<10?'0':''}${sec}`;
+}
+
+function getActiveBuffs() {
+  const buffs = [];
+  for (const [name, def] of Object.entries(SKILL_DEFS)) {
+    // only timed buffs (duration > 0) show in HUD; Pray is instant
+    if (!def || !def.getState || (def.duration || 0) === 0) continue;
+    const st = def.getState();
+    if ((st.activeLeft || 0) > 0) {
+      buffs.push({ name, icon: def.icon, left: st.activeLeft });
+    }
+  }
+  return buffs;
+}
+
+function renderBuffBar() {
+  const bar = document.getElementById('buffBar');
+  if (!bar) return;
+
+  const buffs = getActiveBuffs();
+  bar.innerHTML = ''; // reset
+
+  // Build badges
+  for (const b of buffs) {
+    const el = document.createElement('div');
+    el.className = 'buff-badge';
+    el.innerHTML = `
+      <img src="${b.icon}" alt="${b.name}">
+      <span class="buff-timer" id="buffTimer-${b.name.replace(/\s+/g,'')}">${mmss(b.left)}</span>
+    `;
+    bar.appendChild(el);
+  }
+
+  // manage ticker
+  if (buffTicker) clearInterval(buffTicker);
+  if (buffs.length === 0) return;
+
+  buffTicker = setInterval(() => {
+  let anyActive = false;
+
+  // For each badge currently shown, recompute time left from SKILL_DEFS
+  document.querySelectorAll('#buffBar .buff-badge').forEach(badge => {
+    const name = badge.getAttribute('data-buff');  // set in render
+    const def  = SKILL_DEFS[name];
+    if (!def || !def.getState) return;
+
+    const { activeLeft } = def.getState();
+    const label = document.getElementById(`buffTimer-${name.replace(/\s+/g,'')}`);
+
+    if (activeLeft > 0) {
+      if (label) label.textContent = mmss(activeLeft);
+      anyActive = true;
+    } else {
+      // remove expired badge
+      badge.remove();
+    }
   });
 
-  settingsEl.removeAttribute("hidden");
-  settingsEl.style.display = "block";
-
-  if (typeof syncSettingsUIFromStorage === "function") {
-    syncSettingsUIFromStorage();
+  if (!anyActive) {
+    clearInterval(buffTicker);
+    buffTicker = null;
   }
+}, 1000);
+}
+
+
+function openSettings() {
+  // Close Skills if it’s open
+  const skills = document.getElementById('skillsModal');
+  if (skills) skills.hidden = true;
+
+  // Open Settings
+  const modal = document.getElementById('settingsModal');
+  const back  = document.getElementById('modalBackdrop');
+  if (modal) modal.hidden = false;
+  if (back)  back.hidden  = false;
 }
 
 function closeSettings() {
-  const backdrop = document.getElementById("modalBackdrop");
-  if (backdrop) backdrop.hidden = true;
+  const modal = document.getElementById('settingsModal');
+  if (modal) modal.hidden = true;
 
-  settingsEl.setAttribute("hidden", "");
-  settingsEl.style.display = "none";
+  // Keep backdrop if Skills or Result is still open
+  const skillsOpen = document.getElementById('skillsModal')?.hidden === false;
+  const resultOpen = document.getElementById('resultModal')?.hidden === false;
+
+  const back = document.getElementById('modalBackdrop');
+  if (back && !skillsOpen && !resultOpen) back.hidden = true;
 }
 
 function toggleSettings() {
   isHidden(settingsEl) ? openSettings() : closeSettings();
 }
+
+function updatePlayerHPUI() {
+  const bar  = document.getElementById("playerHealth");
+  const text = document.getElementById("playerHealthText");
+  const clamped = Math.max(0, Math.min(100, Number(playerHP) || 0));
+  if (bar)  bar.style.width = clamped + "%";
+  if (text) text.textContent = clamped;
+}
+
+function openSkillsModal() {
+  // hide non-modal panels
+  document.getElementById('inventoryContainer')?.style && (document.getElementById('inventoryContainer').style.display = 'none');
+  document.getElementById('craftingContainer')?.style  && (document.getElementById('craftingContainer').style.display  = 'none');
+  document.getElementById('lootContainer')?.style      && (document.getElementById('lootContainer').style.display      = 'none');
+
+  // IMPORTANT: hide Settings using the hidden attribute
+  const settings = document.getElementById('settingsModal');
+  if (settings) settings.hidden = true;
+
+  // show backdrop + skills modal
+  const back = document.getElementById('modalBackdrop');
+  if (back) back.hidden = false;
+
+  const modal = document.getElementById('skillsModal');
+  if (modal) {
+    modal.hidden = false;
+    renderSkills();
+  }
+}
+
+function closeSkillsModal() {
+  const modal = document.getElementById('skillsModal');
+  if (modal) modal.hidden = true;
+
+  // keep backdrop if another modal is open
+  const settingsOpen = document.getElementById('settingsModal')?.hidden === false;
+  const resultOpen   = document.getElementById('resultModal')?.hidden === false;
+  if (!settingsOpen && !resultOpen) {
+    const back = document.getElementById('modalBackdrop');
+    if (back) back.hidden = true;
+  }
+}
+
+document.getElementById('skillsCloseBtn')?.addEventListener('click', closeSkillsModal);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const skillsOpen = document.getElementById('skillsModal')?.hidden === false;
+  if (skillsOpen) { closeSkillsModal(); e.preventDefault(); }
+}, true);
 
 // make button onclick work
 window.toggleSettings = toggleSettings;
@@ -2627,10 +2808,6 @@ Object.assign(window, {
 
   // gameplay actions
   gatherResource,
-  usePray,
-  useBulwark,
-  useAcceleration,
-  useEmpower,
 
   // crafting (only if called from HTML)
   renderCraftingUI,

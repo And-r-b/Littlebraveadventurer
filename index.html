@@ -96,19 +96,7 @@
       </div>
       
       <div id="skillsContainer" style="display: none;">
-        <h2>Skills</h2>
-
-        <button id="prayButton" onclick="usePray()" class="skill-button">Pray</button>
-        <p id="prayCooldown" style="color: white; display: none ;">Pray is on cooldown</p>
-
-        <button id="bulwarkButton" onclick="useBulwark()" class="skill-button">Bulwark</button>
-        <p id="bulwarkCooldown" style="color:white; display:none;">Bulwark is on cooldown</p>
-
-        <button id="accelButton" onclick="useAcceleration()" class="skill-button">Acceleration</button>
-        <p id="accelCooldown" style="color:white; display:none;">Acceleration is on cooldown</p>
-
-        <button id="empowerButton" onclick="useEmpower()" class="skill-button">Empower</button>
-        <p id="empowerCooldown" style="color:white; display:none;">Empower is on cooldown</p>
+        
         </div>
 
       <!-- Loot Section -->
@@ -125,6 +113,7 @@
           <!-- Player Health Bar (left side) -->
           <div class="health-bar-container player-side">
             <p id="playerHPLabel">Adventurer's HP | Attack: <span id="playerAttack">10</span> | Defense: <span id="playerDefense">5</span></p>
+            <div id="buffBar" aria-live="polite"></div>
             <div id="playerHealthBar" class="health-bar">
               <div id="playerHealth" class="health-fill"></div>
               <span id="playerHealthText">100</span>
@@ -222,6 +211,14 @@
       <button class="btn danger" id="quitGameButton">Quit Game</button>
     </div>
   </section>
+</div>
+<!-- Skills Modal -->
+<div id="skillsModal" class="skills-modal" hidden>
+  <header class="skills-header">
+    <h2>Skills</h2>
+    <button id="skillsCloseBtn" aria-label="Close skills">✖</button>
+  </header>
+  <div id="skillsBody" class="skills-grid"></div>
 </div>
 
 <!-- Battle Result Modal -->

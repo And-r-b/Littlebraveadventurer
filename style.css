@@ -223,6 +223,24 @@ body {
     position: relative;
 }
 
+/* === Active Buffs HUD === */
+#buffBar{
+  display:flex; gap:8px; align-items:center;
+  margin:8px 0 12px;
+}
+.buff-badge{
+  position:relative; display:inline-flex; align-items:center; justify-content:center;
+  width:40px; height:40px; border-radius:8px; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(2px);
+}
+.buff-badge img{ width:100%; height:100%; object-fit:contain; }
+.buff-timer{
+  position:absolute; right:-6px; bottom:-6px;
+  transform: translate(-2px, -2px);
+  font-size:11px; line-height:1; padding:3px 6px; border-radius:999px;
+  background:#111827; color:#fff; border:1px solid rgba(255,255,255,0.25);
+}
 
   /* Inventory Column */
   #inventory {
@@ -603,18 +621,71 @@ body {
 }
 
 /* Skills Container (Similar to Crafting) */
-#skillsContainer {
-  background-color: rgba(0, 0, 0, 0.8); /* Dark background like crafting */
-  border: 2px solid white; /* White border for contrast */
-  padding: 10px;
-  border-radius: 10px; /* Rounded edges */
-  width: 300px;
-  height: fit-content;
-  color: white; /* Ensure text is visible */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5); /* Soft shadow */
-  margin-right: 20px;
-  z-index: 5000;
+#skillsContainer { max-width: 420px; }
+
+.skill-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin: 0 0 12px 0;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(2px);
 }
+
+.skill-icon { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; }
+.skill-info { flex: 1; text-align: left; }
+.skill-info h3 { margin: 0 0 4px; font-size: 1rem; }
+.skill-info p  { margin: 0; font-size: .9rem; opacity: .9; }
+
+.skill-status { font-size: .85rem; opacity: .85; margin-right: 8px; min-width: 86px; text-align: right; }
+.skill-card button[disabled] { opacity: .6; cursor: not-allowed; }
+
+/* === Skills Modal (same shell as Settings) === */
+#skillsModal[hidden] { display: none !important; }
+#skillsModal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 760px;
+  width: min(92vw, 760px);
+  max-height: 85vh;
+  overflow: auto;
+  background: #1d2330;
+  color: #fff;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  z-index: 1001;
+}
+
+.skills-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.1);
+}
+#skillsCloseBtn{
+  width:36px; height:36px; border:none; border-radius:8px;
+  background:#374151; color:#fff; font-size:18px; cursor:pointer; opacity:.9;
+}
+#skillsCloseBtn:hover{ opacity:1; }
+
+/* roomy grid */
+.skills-grid{
+  padding:16px 16px 20px;
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap:12px;
+}
+
+/* bump card size a bit inside modal */
+.skills-grid .skill-card{
+  padding:14px;
+}
+.skills-grid .skill-icon{ width:56px; height:56px; }
+.skills-grid .skill-info h3{ font-size:1.05rem; }
+.skills-grid .skill-status{ min-width:96px; }
 
 /* Pray Button inside Skills Container */
 #prayButton {
