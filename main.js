@@ -423,7 +423,7 @@ function toggleEquip(itemName) {
 // Construct of what monsters that is available
 const monsters = {
     "Slime": { hp: 20, attack: [4, 8], drops: ["Slime Goo", "Sticky Residue"] },
-    "Wolf": { hp: 40, attack: [7, 13], drops: ["Wolf Pelt", "Sharp Fang"] },
+    "Wolf": { hp: 40, attack: [7, 13], drops: ["Wolf Pelt", "Sharp Fang", "Meat"] },
     "Goblin": { hp: 60, attack: [10, 15], drops: ["Goblin Ear", "Rusty Dagger"] },
     "Orc": { hp: 80, attack: [15, 20], drops: ["Orc Tooth", "Iron Shard"] },
     "Angus": { hp: 120, attack: [30, 35], drops: ["Fox Hat", "Explosive Residue", "Wheat Straw"] }
@@ -684,6 +684,49 @@ const craftingRecipes = {
         defenseBoost: 35
     },
     
+    // Consumables
+
+    "Health Potion": {
+        materials: {
+          "Herb": 3,
+          "Water": 1
+        },
+        result: "Health Potion",
+        consumable: true,
+        effect: { heal: 20 }
+    },
+     "Good Health Potion": {
+        materials: {
+          "Herb": 5,
+          "Water": 3,
+          "Slime Goo": 3
+        },
+        result: "Good Health Potion",
+        consumable: true,
+        effect: { heal: 50 }
+    },
+    "Best Health Potion": {
+        materials: {
+          "Herb": 10,
+          "Water": 5,
+          "Slime Goo": 5
+        },
+        result: "Best Health Potion",
+        consumable: true,
+        effect: { heal: 75 }
+    },
+
+    "Strength Stew": {
+      materials: {
+        "Wolf Pelt": 1,
+        "Meat": 2
+      },
+      result: "Strength Stew",
+      consumable: true,
+      effect: { buffAttack: 5, duration: 60 } // +5 attack for 60s
+    }
+
+
     // Add more upgrades here...
 };
 
@@ -697,6 +740,7 @@ function displayItems(itemCategory) {
         .filter(([_, recipe]) => {
             if (itemCategory === 'weapons') return recipe.attackBoost !== undefined;
             if (itemCategory === 'armor') return recipe.defenseBoost !== undefined;
+            if (itemCategory === 'consumables') return recipe.consumable === true;
             return false;
         });
 
@@ -735,6 +779,10 @@ document.getElementById('armor').addEventListener('click', () => {
     displayItems('armor');  // Display armor
 });
 
+document.getElementById('consumables').addEventListener('click', () => {
+  displayItems('consumables'); // Display Consumables
+});
+
 // Function on how to craft items
 function craftItem(itemName) {
     console.log(`Attempting to craft: ${itemName}`);
@@ -771,6 +819,32 @@ function craftItem(itemName) {
             alert("You don't have enough materials to craft this.");
         }
     }
+}
+
+function useConsumable(itemName) {
+  const item = craftingRecipes[itemName];
+  if (!item || !item.consumable) return;
+  if (!inventory[itemName] || inventory[itemName] <= 0) return;
+
+  // Apply effects
+  if (item.effect.heal) {
+    playerHP = Math.min(playerHP + item.effect.heal, 100); // cap at max HP
+    document.getElementById("playerHealthText").innerText = playerHP;
+    document.getElementById("playerHealth").style.width = `${playerHP}%`;
+  }
+
+  if (item.effect.buffAttack) {
+    equipment.attack += item.effect.buffAttack;
+    updatePlayerStats();
+    setTimeout(() => {
+      equipment.attack -= item.effect.buffAttack;
+      updatePlayerStats();
+    }, item.effect.duration * 1000);
+  }
+
+  // Remove from inventory
+  inventory[itemName]--;
+  updateInventory();
 }
 
 
@@ -893,7 +967,7 @@ function gatherResource() {
 }
 
 function giveGatherReward() {
-    const availableResources = ["Iron Ore", "Wood", "Leather", "Steel Ore"];
+    const availableResources = ["Iron Ore", "Wood", "Leather", "Steel Ore", "Water"];
     let gatheredItems = {};
     let totalItems = 10; // Maximum number of items the player can receive
 
@@ -1104,15 +1178,26 @@ function updateInventory(newLoot = "") {
     const div = document.createElement("div");
     div.className = "inventory-item";
 
+    // --- Consumable handling ---
+    const recipe = craftingRecipes[item];
+    if (recipe && recipe.consumable === true) {
+      div.innerHTML = `
+        <span>${item}</span>
+        <span class='quantity'>x${inventory[item]}</span>
+        <button onclick="useConsumable('${item}')">Use</button>
+      `;
+      inventoryDiv.appendChild(div);
+      continue; // skip further handling for this item
+    }
+
+    // --- Equipment handling (weapon/armor) ---
     const kind = getEquipType(item);
     if (!kind) {
-      // Not equippable (materials etc.)
+      // Plain material/loot
       div.innerHTML = `<span>${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
     } else {
-      // Equippable (weapon/armor)
       const equipped = isEquipped(item);
       const btnText = equipped ? "Unequip" : "Equip";
-
       div.innerHTML = `
         <span>${item}${equipped ? " (equipped)" : ""}</span>
         <span class='quantity'>x${inventory[item]}</span>
@@ -1122,6 +1207,7 @@ function updateInventory(newLoot = "") {
 
     inventoryDiv.appendChild(div);
   }
+
   renderEquipmentPanel();
 }
 
@@ -1212,6 +1298,8 @@ function usePray() {
 
     // Save HP to localStorage to persist after refresh
     localStorage.setItem('playerHP', playerHP);
+
+    saveGameData();
 
     // Update the Pray button text to indicate it's in use
     let prayButton = document.getElementById('prayButton');
@@ -1446,6 +1534,8 @@ function fightMonster() {
 
         playerHP -= effectiveDamage; // Decrease player's HP based on effective damage after defense
 
+        updateHealthBars(playerHP, monster, selectMonster);
+        saveGameData();
         // Check if the player is defeated
         if (playerHP <= 0) {
             playerHP = 0; // Ensure HP is set to 0 if the player is defeated
@@ -1458,9 +1548,6 @@ function fightMonster() {
             clearInterval(battleInterval);
             return; // Exit the interval callback function
         }
-
-        // Update the player's current HP display after the monster attacks
-        document.getElementById("playerHP").innerText = `HP: ${playerHP}`;
 
     }, 1000); // Run the battle tick every second (1000 milliseconds)
 
@@ -1515,7 +1602,8 @@ async function startNewGame() {
         "Iron Ore": 0,
         "Wood": 0,
         "Leather": 0,
-        "Steel Ore": 0
+        "Steel Ore": 0,
+        "Water": 0
     };
     equipment = {
         weapon: "None",
@@ -1591,6 +1679,13 @@ async function saveGameData() {
   if (window.saveAPI?.save) await window.saveAPI.save(save);
 }
 
+window.addEventListener('beforeunload', () => {
+  try { saveGameData(); } catch {}
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { try { saveGameData(); } catch {} }
+});
+
 window.addEventListener('load', initSaves);
 
 async function initSaves() {
@@ -1620,6 +1715,9 @@ async function initSaves() {
   } catch (e) {
     console.warn("initSaves failed, fallback to localStorage only:", e);
   }
+
+  // kick off your normal startup
+  updateHealthBars(playerHP); // ✅ make the UI show saved HP immediately
 }
 
 

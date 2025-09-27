@@ -245,7 +245,7 @@ body {
   background: #888;      /* color on hover */
 }
   
-#weapons, #armor {
+#weapons, #armor, #consumables {
   background-color: #28a745;
   color: white;
   padding: 10px;
@@ -322,7 +322,7 @@ body {
   border: 2px solid white; /* White border like inventory */
   padding: 10px;
   border-radius: 10px; /* Rounded edges */
-  width: 300px;
+  width: 400px;
   color: white; /* Ensure text is visible */
   margin-right: 20px;
 }

@@ -15,6 +15,19 @@ try {
   console.warn('[Steam] Overlay hook failed:', e?.message || e);
 }
 
+// Ensure only one instance of the app
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+
+app.on('second-instance', () => {
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  }
+});
+
 let win;
 const SAVE_FILE = path.join(app.getPath('userData'), 'save.json');
 
