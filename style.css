@@ -114,6 +114,7 @@ body {
   font-size: 1.2rem;
   margin-left: auto;
   margin-right: auto;
+  box-shadow:0 4px 6px rgba(0,0,0,0.5);   /* added */
 }
 
 /* Even, responsive toolbar for Inventory / Skills / Gather / Craft / Settings */
@@ -159,10 +160,12 @@ body {
     display: block;
     margin-left: auto;
     margin-right: auto;
+    box-shadow:0 3px 6px rgba(0,0,0,0.6); /* shadow */ ;
   }
   
   .fight-button:hover {
     background-color: #218838;
+    filter:brightness(1.1);
   }
   
   /* Weapon Slot */
@@ -176,6 +179,11 @@ body {
 
 #knightclass {
   font-size: 23px;
+  padding:4px 10px;
+  border-radius:8px;
+  color:#fff;
+  font-weight:600;
+   text-shadow:0 2px 4px rgba(0,0,0,0.8);  /* halo like selection-text */
 }
 
 #playerStatsContainer {
@@ -572,6 +580,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow:0 4px 6px rgba(0,0,0,0.5);   /* added */
 
 }
 
@@ -836,6 +845,119 @@ body {
   box-shadow: 0 20px 60px rgba(0,0,0,0.45);
   z-index: 1001; /* above backdrop */
 }
+
+.selection-status{
+  display:flex;
+  flex-direction:column;   /* stack text and button vertically */
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin: 8px 0 12px;
+  color:#fff;
+  font-weight:600;
+}
+
+.selection-text{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-shadow:0 2px 4px rgba(0,0,0,0.8);  /* halo only */
+}
+.selection-status .dot{ opacity:.7 }
+
+.btn-mini{
+  padding:6px 12px;
+  border-radius:10px;
+  background:#008cff;          /* solid blue (like your other buttons) */
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  font-size:0.9rem;
+  box-shadow:0 4px 6px rgba(0,0,0,0.5); /* OUTSIDE shadow */
+}
+.btn-mini:hover{ filter:brightness(1.08); }
+
+
+/* === Area/Monster modal — match Settings/Result theme === */
+.am-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000;
+}
+.am-modal{
+  position:fixed; left:50%; top:10%; transform:translateX(-50%);
+  width: min(900px, 92vw);
+  background:#1d2330;           /* same as settings/result */
+  color:#fff;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.45);
+  z-index:1001;                  /* above backdrop */
+}
+.am-header{
+  display:flex; align-items:center; justify-content:space-between;
+}
+.am-header h3{ margin:0; }
+.am-icon-btn{
+  background:#1f2937; color:#fff; border:none; border-radius:8px;
+  width:32px; height:32px; font-size:18px; cursor:pointer; opacity:.9;
+}
+.am-icon-btn:hover{ opacity:1; }
+
+.am-body{
+  display:grid; grid-template-columns: 220px 1fr; gap:14px; margin-top:12px;
+  min-height:320px;
+}
+
+/* Areas list (left) — same feel as inventory panels */
+.am-areas{ display:flex; flex-direction:column; gap:8px; }
+.am-area{
+  text-align:left; padding:10px;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:10px; cursor:pointer;
+  background: rgba(255,255,255,0.08);   /* translucent like your panels */
+  color:#fff;
+}
+.am-area:hover{
+  background: rgba(255,255,255,0.12);
+}
+.am-area[aria-pressed="true"]{
+  background:#008cffcc;                 /* your blue button color */
+  border-color:#fff;
+  outline:none;
+}
+
+/* Monsters grid (right) — dark cards with your selection color */
+.am-monsters h4{ margin:4px 0 8px; font-weight:600; }
+.am-grid{
+  display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap:12px;
+}
+.am-card{
+  display:flex; flex-direction:column; align-items:center; padding:12px;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:12px; background: rgba(255,255,255,0.08);
+  color:#fff; cursor:pointer;
+}
+.am-card:hover{
+  background: rgba(255,255,255,0.12);
+}
+.am-card img{ max-width:96px; height:auto; display:block; }
+
+.am-card .name{ margin-top:6px; font-weight:600; }
+
+.am-card[aria-pressed="true"]{
+  background: rgba(255,255,255,0.08);   /* same dark translucent as default */
+  border: 2px solid #008cffcc;          /* strong blue border */
+  box-shadow: 0 0 8px rgba(0,140,255,0.6); /* subtle glow effect */
+  outline: none;
+}
+
+/* Modal footer buttons — reuse your green/gray */
+.btn{ padding:8px 12px; border-radius:10px; border:1px solid #ddd; cursor:pointer; }
+.btn-sec{ background:#f3f3f3; color:#111; }
+.btn-pri{ background:#28a745; color:#fff; border-color:#28a745; }
+.btn:hover{ filter:brightness(1.05); }
 
 /* Optional: close button in the corner */
 #settingsCloseBtn {

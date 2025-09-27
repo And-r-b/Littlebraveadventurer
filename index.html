@@ -30,15 +30,14 @@
 
   <!-- Game Content -->
   <div id="gameContent" style="display: none;">
-    <h1>Select a monster to fight:</h1>
-    <select id="monsterSelect" onchange="selectMonster()">
-      <option value="Slime">Slime</option>
-      <option value="Wolf">Wolf</option>
-      <option value="Goblin">Goblin</option>
-      <option value="Orc">Orc</option>
-      <option value="Angus">Boss: Angus</option>
-    </select>
-
+    <div id="selectionStatus" class="selection-status">
+      <div class="selection-text">
+        <span id="currentArea">Area: —</span>
+        <span class="dot">•</span>
+        <span id="currentMonster">Monster: —</span>
+      </div>
+      <button id="openAreaMonsterBtn" class="btn btn-mini">Change</button>
+    </div>
     <!-- Main Fight Button (Above the fight container) -->
     <button onclick="fightMonster()" class="fight-button">Fight Monster</button>
     
@@ -98,7 +97,7 @@
       
       <div id="skillsContainer" style="display: none;">
         <h2>Skills</h2>
-        
+
         <button id="prayButton" onclick="usePray()" class="skill-button">Pray</button>
         <p id="prayCooldown" style="color: white; display: none ;">Pray is on cooldown</p>
 
@@ -174,12 +173,38 @@
   <button onclick="startNewGame()">Reset Game</button>
   <button id="quitGameButton">Quit Game</button>
 </div>
+
 <!-- Battle Result Modal -->
 <div id="resultModal" hidden>
   <h2 id="resultTitle">Result</h2>
   <p id="resultText"></p>
   <div class="modal-actions">
     <button id="resultPrimary">OK</button>
+  </div>
+</div>
+
+<!-- Area/Monster modal -->
+<div id="amBackdrop" class="am-backdrop" hidden></div>
+<div id="amModal" class="am-modal" role="dialog" aria-modal="true" hidden>
+  <div class="am-header">
+    <h3>Choose Area & Monster</h3>
+    <button id="amClose" class="am-icon-btn" aria-label="Close">✕</button>
+  </div>
+
+  <div class="am-body">
+    <!-- Areas (left) -->
+    <nav id="amAreas" class="am-areas" aria-label="Areas"></nav>
+
+    <!-- Monsters (right) -->
+    <section class="am-monsters">
+      <h4 id="amMonstersTitle">Monsters</h4>
+      <div id="amGrid" class="am-grid"></div>
+    </section>
+  </div>
+
+  <div class="am-footer">
+    <button id="amCancel" class="btn btn-sec">Cancel</button>
+    <button id="amConfirm" class="btn btn-pri">Confirm</button>
   </div>
 </div>
 </body>

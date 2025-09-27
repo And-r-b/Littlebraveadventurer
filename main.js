@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Hook menu buttons
   document.getElementById('btnNewGame')?.addEventListener('click', startNewGameFromMenu);
   document.getElementById('btnContinue')?.addEventListener('click', continueFromMenu);
-// document.getElementById('btnLoad')?.addEventListener('click', continueFromMenu); // single slot for now
+  // document.getElementById('btnLoad')?.addEventListener('click', continueFromMenu); // single slot for now
   document.getElementById('btnQuit')?.addEventListener('click', () => {
     if (window.electronAPI?.quitApp) window.electronAPI.quitApp();
   });
@@ -264,12 +264,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-   const prayBtn = document.getElementById("prayButton");
+
+  // === Skill tooltips (unchanged) ===
+  const prayBtn = document.getElementById("prayButton");
   if (prayBtn) {
     prayBtn.innerHTML = `<span class="has-tip label" data-tip="${SKILL_DESCRIPTIONS['Pray']}">Pray</span>`;
   }
 
-   const setSkillTooltip = (id, name) => {
+  const setSkillTooltip = (id, name) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.innerHTML = `<span class="has-tip label" data-tip="${SKILL_DESCRIPTIONS[name]}">${name}</span>`;
@@ -278,7 +280,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   setSkillTooltip('bulwarkButton',  'Bulwark');
   setSkillTooltip('accelButton',    'Acceleration');
   setSkillTooltip('empowerButton',  'Empower');
+
+  // === Area & Monster modal wiring ===
+  // (1) Restore last picks if present (optional)
+  try {
+    const sa = localStorage.getItem('selectedArea');
+    const sm = localStorage.getItem('selectedMonster');
+    if (sa && AREA_DEFS[sa]) selectedArea = sa;
+    if (sm && monsters[sm])  applySelectedMonster(sm);
+  } catch {}
+
+  // (2) Buttons / backdrop
+  const openBtn = document.getElementById('openAreaMonsterBtn');
+  const closeBtn = document.getElementById('amClose');
+  const cancelBtn = document.getElementById('amCancel');
+  const confirmBtn = document.getElementById('amConfirm');
+  const backdrop = document.getElementById('amBackdrop');
+
+  openBtn?.addEventListener('click', openAreaMonsterModal);
+  closeBtn?.addEventListener('click', closeAreaMonsterModal);
+  cancelBtn?.addEventListener('click', closeAreaMonsterModal);
+  backdrop?.addEventListener('click', closeAreaMonsterModal);
+  confirmBtn?.addEventListener('click', confirmAreaMonster);
+
+  // (3) Optional: if no monster yet, seed a sensible default from current area
+  if (!selectedMonster) {
+    const firstArea = selectedArea || Object.keys(AREA_DEFS)[0];
+    const firstList = (AREA_DEFS[firstArea] || []);
+    if (firstList.length) applySelectedMonster(firstList[0]);
+  }
+
+  updateSelectionStatus();
 });
+
 
 function applySaveToState(save) {
   try {
@@ -483,10 +517,32 @@ const monsterDataMap = {
   }
 };
 
+const AREA_DEFS = {
+  "Cave":           ["Slime"],
+  "Forest":         ["Wolf"],
+  "Goblin Camp":    ["Goblin"],
+  "Orc Camp":       ["Orc"],
+  "Field Overlook": ["Angus"], // Boss here
+};
+
+const AREA_BG = {
+  "Cave":           'url("images/cave.png")',
+  "Forest":         'url("images/fantasy-forest.png")',
+  "Goblin Camp":    'url("images/goblin-camp.png")',
+  "Orc Camp":       'url("images/orc-camp.png")',
+  "Field Overlook": 'url("images/angusfields.png")',
+};
+
+let selectedArea = Object.keys(AREA_DEFS)[0] || null; // current/last used area
+let tempArea = selectedArea;          // temp selection inside modal
+let tempMonster = null;               // temp monster in modal
+
 function selectMonster() {
     if (!isGameVisible()) return;
 
     const selectElement = document.getElementById("monsterSelect");
+    if (!selectElement) return; // safe if you removed the dropdown
+
     const monsterName = selectElement.value;
 
     if (monsters[monsterName]) {
@@ -508,6 +564,138 @@ function selectMonster() {
         // Play monster sound (if available)
         playSound(monsterData.sound);
     }
+}
+
+function applySelectedMonster(monsterName){
+  if (!monsters[monsterName]) return;
+
+  selectedMonster = monsterName;
+  monster.hp = monsters[monsterName].hp;
+
+  // UI: HP bar + labels
+  document.getElementById("monsterHPLabel").textContent = `${monsterName}'s HP`;
+  document.getElementById("monsterHealthText").textContent = monster.hp;
+  document.getElementById("monsterHealth").style.width = "100%";
+
+  // Background: prefer area image
+  const data = monsterDataMap[monsterName];
+  const bg = (typeof selectedArea === 'string' && AREA_BG?.[selectedArea])
+    ? AREA_BG[selectedArea]
+    : data.background;
+
+  document.body.style.backgroundImage = bg;
+  document.body.style.backgroundRepeat = 'no-repeat';
+  document.body.style.backgroundSize  = 'cover';
+
+  // Monster image
+  document.querySelector('.monster-image img').src = data.monsterImage;
+
+  // SFX
+  playSound(data.sound);
+  updateSelectionStatus();
+}
+
+function renderAreasList(){
+  const wrap = document.getElementById('amAreas');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  Object.keys(AREA_DEFS).forEach(area=>{
+    const b = document.createElement('button');
+    b.className = 'am-area';
+    b.type = 'button';
+    b.textContent = area;
+    b.setAttribute('aria-pressed', String(tempArea === area));
+    b.onclick = () => { tempArea = area; tempMonster = null; renderAreasList(); renderMonstersGrid(); };
+    wrap.appendChild(b);
+  });
+}
+
+function renderMonstersGrid(){
+  const title = document.getElementById('amMonstersTitle');
+  const grid  = document.getElementById('amGrid');
+  if (!grid || !title) return;
+
+  title.textContent = `Monsters in “${tempArea}”`;
+  grid.innerHTML = '';
+
+  const names = AREA_DEFS[tempArea] || [];
+  names.forEach(name=>{
+    if (!monsterDataMap[name]) return;
+    const card = document.createElement('button');
+    card.className = 'am-card';
+    card.type = 'button';
+    card.setAttribute('aria-pressed', String(tempMonster === name));
+
+    const img = document.createElement('img');
+    img.src = monsterDataMap[name].monsterImage;
+    img.alt = name;
+
+    const label = document.createElement('div');
+    label.className = 'name';
+    label.textContent = name;
+
+    card.appendChild(img); card.appendChild(label);
+    card.onclick = () => {
+      tempMonster = name;
+      document.querySelectorAll('.am-card').forEach(c=>c.setAttribute('aria-pressed','false'));
+      card.setAttribute('aria-pressed','true');
+    };
+
+    grid.appendChild(card);
+  });
+
+  // auto pick first if none selected
+  if (!tempMonster && names.length){
+    tempMonster = names[0];
+    const first = grid.querySelector('.am-card');
+    if (first) first.setAttribute('aria-pressed','true');
+  }
+}
+
+function openAreaMonsterModal(){
+  const modal = document.getElementById('amModal');
+  const back  = document.getElementById('amBackdrop');
+  if (!modal || !back) return;
+
+  // seed temps from current selection
+  tempArea = selectedArea || Object.keys(AREA_DEFS)[0];
+  // if current selectedMonster not in area, tempMonster will be set by render
+  tempMonster = (AREA_DEFS[tempArea] || []).includes(selectedMonster) ? selectedMonster : null;
+
+  renderAreasList();
+  renderMonstersGrid();
+
+  modal.hidden = false;
+  back.hidden = false;
+
+  // basic focus & esc
+  setTimeout(()=>document.getElementById('amClose')?.focus(), 0);
+  document.addEventListener('keydown', escCloseHandler);
+}
+
+function closeAreaMonsterModal(){
+  const modal = document.getElementById('amModal');
+  const back  = document.getElementById('amBackdrop');
+  if (!modal || !back) return;
+  modal.hidden = true;
+  back.hidden = true;
+  document.removeEventListener('keydown', escCloseHandler);
+}
+
+function escCloseHandler(e){
+  if (e.key === 'Escape') closeAreaMonsterModal();
+}
+
+function confirmAreaMonster(){
+  if (!tempMonster) return; // require a monster
+  selectedArea = tempArea;
+  applySelectedMonster(tempMonster);
+  // optional persistence
+  try { localStorage.setItem('selectedArea', selectedArea); } catch {}
+  try { localStorage.setItem('selectedMonster', selectedMonster); } catch {}
+  closeAreaMonsterModal();
+  updateSelectionStatus();
 }
 
 
@@ -1895,22 +2083,27 @@ function resetMonsterBar(monsterName) {
 // Fighting Function
 
 function fightMonster() {
-  const selectedMonster = document.getElementById("monsterSelect").value;
+  // Use the globally selected monster (set by the modal)
+  // Fallback: first monster of the current/first area
+  const mName =
+    selectedMonster ||
+    (AREA_DEFS[selectedArea] || [])[0] ||
+    (AREA_DEFS[Object.keys(AREA_DEFS)[0]] || [])[0];
+
+  if (!mName || !monsters[mName]) return;
 
   document.getElementById("message").innerText = "";
 
-  // Fresh copy of the selected monster
-  let monster = { ...monsters[selectedMonster] };
-  monster.hp = monsters[selectedMonster].hp;
+  // Fresh working copy so we can mutate hp locally during the fight
+  let monster = { ...monsters[mName], hp: monsters[mName].hp };
 
   const battleInterval = setInterval(() => {
     // ===== Player attacks =====
-    // Empower: +10 to attack while active
     const baseAtk = (equipment.attack || 0) + (empowerActive ? 10 : 0);
     let playerDamage = Math.floor(Math.random() * Math.max(1, baseAtk)) + 1;
     monster.hp -= playerDamage;
 
-    // Acceleration: second swing while active
+    // Acceleration: extra swing
     if (accelActive && monster.hp > 0) {
       const extra = Math.floor(Math.random() * Math.max(1, baseAtk)) + 1;
       monster.hp -= extra;
@@ -1918,24 +2111,24 @@ function fightMonster() {
 
     if (monster.hp < 0) monster.hp = 0;
 
-    updateHealthBars(playerHP, monster, selectedMonster); // <-- bug fixed (was selectMonster)
+    updateHealthBars(playerHP, monster, mName);
 
-    // Monster defeated?
+    // ===== Monster defeated? =====
     if (monster.hp === 0) {
       const drop = monster.drops[Math.floor(Math.random() * monster.drops.length)];
-      openResultModal('win', selectedMonster, drop);
+      openResultModal('win', mName, drop);
 
-      // loot
+      // loot + UI
       inventory[drop] = (inventory[drop] || 0) + 1;
       updateInventory();
 
       saveGameData();
       clearInterval(battleInterval);
 
-      // refresh UI bar and achievements
-      monster.hp = monsters[selectedMonster].hp;
-      resetMonsterBar(selectedMonster);
-      awardKillAchievements(selectedMonster);
+      // reset UI bar and achievements
+      monster.hp = monsters[mName].hp;
+      resetMonsterBar(mName);
+      awardKillAchievements(mName);
       return;
     }
 
@@ -1943,30 +2136,28 @@ function fightMonster() {
     const monsterDamage =
       Math.floor(Math.random() * (monster.attack[1] - monster.attack[0] + 1)) + monster.attack[0];
 
-    // Defense first
+    // Apply defense
     let effectiveDamage = Math.max(0, monsterDamage - (equipment.defense || 0));
 
-    // Bulwark: halve incoming damage while active (set to 0 for full nullification)
+    // Bulwark: halve incoming damage while active
     if (bulwarkActive) {
       effectiveDamage = Math.floor(effectiveDamage * 0.5);
-      // For full immunity instead: effectiveDamage = 0;
     }
 
     playerHP -= effectiveDamage;
 
-    updateHealthBars(playerHP, monster, selectedMonster);
+    updateHealthBars(playerHP, monster, mName);
     saveGameData();
 
-    // Player defeated?
+    // ===== Player defeated? =====
     if (playerHP <= 0) {
       playerHP = 0;
-      openResultModal('lose', selectedMonster);
+      openResultModal('lose', mName);
       saveGameData();
       clearInterval(battleInterval);
       return;
     }
-
-  }, 1000); // 1s ticks
+  }, 1000);
 }
 
 function awardKillAchievements(monsterType) {
@@ -2189,6 +2380,13 @@ function isHidden(el) {
 // add this helper (it was missing)
 function isSettingsOpen() {
   return settingsEl && !settingsEl.hasAttribute("hidden") && getComputedStyle(settingsEl).display !== "none";
+}
+
+function updateSelectionStatus(){
+  const a = document.getElementById('currentArea');
+  const m = document.getElementById('currentMonster');
+  if (a) a.textContent = `Area: ${selectedArea || '—'}`;
+  if (m) m.textContent = `Monster: ${selectedMonster || '—'}`;
 }
 
 
