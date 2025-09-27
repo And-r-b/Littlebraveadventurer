@@ -925,6 +925,7 @@ const craftingRecipes = {
 
     // Smelting
     "Coal": {
+      category: "smelting",
       materials: {
         "Wood": 1
       },
@@ -932,6 +933,7 @@ const craftingRecipes = {
     },
 
      "Iron Ingot": {
+      category: "smelting",
       materials: {
         "Iron Ore": 2,
         "Coal": 1
@@ -940,6 +942,7 @@ const craftingRecipes = {
     },
 
     "Steel Ingot": {
+      category: "smelting",
       materials: {
         "Iron Ingot": 5,
         "Coal": 1
@@ -1008,51 +1011,118 @@ const SKILL_DESCRIPTIONS = {
   // add more as you add skills
 };
 
+// Small helper: map item -> icon path (add/extend as you add art)
+const ITEM_ICONS = {
+  "Iron Ore": "images/items/iron-ore.png",
+  "Iron Ingot": "images/items/iron-ingot.png",
+  "Steel Ingot": "images/items/steel-ore.png",
+  "Wood": "images/items/wood.png",
+  "Leather": "images/items/leather.png",
+  "Water": "images/items/water-drop.png",
+  "Herb": "images/items/herb.png",
+  "Coal": "images/items/coal.png",
+  "Slime Goo": "images/items/slime-goo.png",
+  "Sticky Residue": "images/items/sticky-res.png",
+  "Wolf Pelt": "images/items/wolf-pelt-icon.png",
+  "Sharp Fang": "images/items/fang.png",
+  "Goblin Ear": "images/items/goblin-ear.png",
+  "Rusty Dagger": "images/items/rusty-dagger.png",
+  "Iron Shard": "images/items/iron-shard-icon.png",
+  "Orc Tooth": "images/items/orc-tooth.png",
+  "Wheat Straw": "images/items/wheat.png",
+  "Explosive Residue": "images/items/explosive.png",
+
+  // crafted gear
+  "Training Sword": "images/items/training-sword.png",
+  "Slime Sword": "images/items/slime-sword.png",
+  "Iron Sword": "images/items/iron-sword.png",
+  "Sharp-Fanged Blade": "images/items/fang-sword.png",
+  "Sharpend Goblin Blade": "images/items/goblin-blade.png",
+  "Steel Sword": "images/items/steel-sword.png",
+  "Orcish Blade": "images/items/orc-blade.png",
+  "Explosive Blade (Legendary)": "images/items/explosive-blade.png",
+
+  "Leather Armor": "images/items/leather-armor.png",
+  "Slime Armor": "images/items/slime-armor.png",
+  "Iron Armor": "images/items/iron-armor.png",
+  "Wolf Armor": "images/items/wolf-armor.png",
+  "Goblin-Made Armor": "images/items/goblin-armor.png",
+  "Steel Armor": "images/items/steel-armor.png",
+  "Orcish Armor": "images/items/orc-armor.png",
+  "Special Fox Hat (Legendary)": "images/items/fox-hat.png",
+
+  // consumables
+  "Health Potion": "images/items/health-potion.png",
+  "Good Health Potion": "images/items/fox-hat.png",
+  "Best Health Potion": "images/items/fox-hat.png",
+  "Strength Stew": "images/items/fox-hat.png",
+};
+
+// Fallback icon element if image missing
+function iconEl(name){
+  const path = ITEM_ICONS[name];
+  const wrap = document.createElement('div');
+  wrap.className = 'item-icon';
+  if (path){
+    const img = document.createElement('img');
+    img.src = path;
+    img.alt = name;
+    img.onerror = () => { wrap.innerHTML = `<div class="fallback">${name[0]||"?"}</div>`; };
+    wrap.appendChild(img);
+  }else{
+    wrap.innerHTML = `<div class="fallback">${name[0]||"?"}</div>`;
+  }
+  return wrap;
+}
+
 // Function to display weapons or armor in the UI
 function displayItems(itemCategory) {
-    const container = document.getElementById('items-container');
-    container.innerHTML = '';  // Clear previous items
+  const container = document.getElementById('items-container');
+  container.innerHTML = '';  // Clear previous items
+  container.className = 'craft-grid'; // apply grid styling
 
-    // Dynamically collect items based on category
-    const itemsToDisplay = Object.entries(craftingRecipes)
-        .filter(([_, recipe]) => {
-            if (itemCategory === 'weapons') return recipe.attackBoost !== undefined;
-            if (itemCategory === 'armor') return recipe.defenseBoost !== undefined;
-            if (itemCategory === 'consumables') return recipe.consumable === true;
-            if (itemCategory === 'smelting') {
-                return (
-                    recipe.attackBoost === undefined &&
-                    recipe.defenseBoost === undefined &&
-                    recipe.consumable !== true
-                );
-            }
-            return false;
-        });
+  // Filter recipes into the chosen category
+  const itemsToDisplay = Object.entries(craftingRecipes).filter(([_, recipe]) => {
+    if (itemCategory === 'weapons')   return recipe.attackBoost !== undefined;
+    if (itemCategory === 'armor')     return recipe.defenseBoost !== undefined;
+    if (itemCategory === 'consumables') return recipe.consumable === true;
+    if (itemCategory === 'smelting')    return recipe.category === 'smelting' || recipe.type === 'smelting';
+    return false;
+  });
 
-    // Loop through filtered items
-    itemsToDisplay.forEach(([itemName, recipe]) => {
-        let canCraft = true;
+  itemsToDisplay.forEach(([itemName, recipe]) => {
+    let canCraft = true;
+    for (let material in recipe.materials) {
+      if (!inventory[material] || inventory[material] < recipe.materials[material]) {
+        canCraft = false; break;
+      }
+    }
 
-        for (let material in recipe.materials) {
-            if (!inventory[material] || inventory[material] < recipe.materials[material]) {
-                canCraft = false;
-                break;
-            }
-        }
+    const card = document.createElement('div');
+    card.className = 'craft-card';
 
-        const itemDiv = document.createElement("div");
-        itemDiv.classList.add("crafting-item");
+    const icon = iconEl(itemName);
+    const name = document.createElement('div');
+    name.className = 'item-name';
+    name.textContent = itemName;
 
-        itemDiv.innerHTML = `
-            <h3>${itemName}</h3>
-            <p>Materials: ${Object.entries(recipe.materials).map(([mat, amt]) => `${amt} ${mat}`).join(', ')}</p>
-            <button ${canCraft ? `onclick="craftItem('${itemName}')"` : "disabled"}>
-                ${canCraft ? `Craft ${itemName}` : "Can't Craft"}
-            </button>
-        `;
+    const meta = document.createElement('div');
+    meta.className = 'item-meta';
+    meta.textContent = `Materials: ${Object.entries(recipe.materials)
+      .map(([mat, amt]) => `${amt} ${mat}`).join(', ')}`;
 
-        container.appendChild(itemDiv);
-    });
+    const actions = document.createElement('div');
+    actions.className = 'craft-actions';
+    const btn = document.createElement('button');
+    btn.className = 'btn-sm';
+    btn.disabled = !canCraft;
+    btn.textContent = canCraft ? `Craft` : `Can't Craft`;
+    if (canCraft) btn.onclick = () => craftItem(itemName);
+
+    card.append(icon, name, meta, actions);
+    actions.appendChild(btn);
+    container.appendChild(card);
+  });
 }
 
 
@@ -1465,19 +1535,21 @@ function renderEquipmentPanel() {
   def.textContent = equipment.defense ?? BASE_DEFENSE;
 }
 
-// Function to update the inventory display
+// ------- INVENTORY (cards + grid, still grouped by category)
 function updateInventory(newLoot = "") {
   const inventoryDiv = document.getElementById("inventory");
+  if (!inventoryDiv) return;
+
   inventoryDiv.innerHTML = "<h2>Inventory</h2>";
 
+  // (optional) small toast-like line when you just gathered something
   if (newLoot) {
-    const newLootDiv = document.createElement("div");
-    newLootDiv.classList.add("inventory-item");
-    newLootDiv.innerHTML = `<span>You gathered: ${newLoot}</span>`;
-    inventoryDiv.appendChild(newLootDiv);
+    const note = document.createElement("div");
+    note.className = "inventory-item"; // reuse old style for the toast line
+    note.innerHTML = `<span>You gathered: ${newLoot}</span>`;
+    inventoryDiv.appendChild(note);
   }
 
-  // 1) Collect into buckets
   const categories = {
     Weapons: [],
     Armor: [],
@@ -1485,77 +1557,89 @@ function updateInventory(newLoot = "") {
     Materials: []
   };
 
+  // Sort items into categories you already use
   for (const item in inventory) {
-    if (inventory[item] <= 0) continue;
+    const qty = inventory[item] || 0;
+    if (qty <= 0) continue;
 
     const recipe = craftingRecipes[item];
-    const kind = getEquipType(item); // "weapon" | "armor" | null
-
-    if (recipe?.consumable === true) {
-      categories.Consumables.push(item);
-    } else if (kind === "weapon") {
-      categories.Weapons.push(item);
-    } else if (kind === "armor") {
-      categories.Armor.push(item);
-    } else {
-      categories.Materials.push(item);
-    }
+    if (recipe?.attackBoost !== undefined) categories.Weapons.push(item);
+    else if (recipe?.defenseBoost !== undefined) categories.Armor.push(item);
+    else if (recipe?.consumable === true) categories.Consumables.push(item);
+    else categories.Materials.push(item);
   }
 
-  // 2) Helper to render one category section
-  const renderCategory = (title, items) => {
-    if (!items.length) return;
+  // Render a section -> grid -> cards
+  const makeSection = (title, list) => {
+    if (!list.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'inv-section';
+    sec.innerHTML = `<h3>${title}</h3><div class="inv-grid"></div>`;
+    const grid = sec.querySelector('.inv-grid');
 
-    const h3 = document.createElement("h3");
-    h3.textContent = title;
-    inventoryDiv.appendChild(h3);
+    list.sort().forEach(item => {
+      const qty = inventory[item] || 0;
+      const kind = getEquipType(item); // "weapon" | "armor" | null
+      const equipped = isEquipped(item);
 
-    items.forEach((item) => {
-      const div = document.createElement("div");
-      div.className = "inventory-item";
-      const tip = (typeof ITEM_DESCRIPTIONS !== "undefined" && ITEM_DESCRIPTIONS[item]) ? ITEM_DESCRIPTIONS[item] : "";
+      const card = document.createElement('div');
+      card.className = 'inv-card';
 
-      // Consumables
-      if (craftingRecipes[item]?.consumable === true) {
-        div.innerHTML = `
-          <span class="has-tip" data-tip="${tip}">${item}</span>
-          <span class='quantity'>x${inventory[item]}</span>
-          <button onclick="useConsumable('${item}')">Use</button>
-        `;
-        inventoryDiv.appendChild(div);
-        return;
-      }
+      const top = iconEl(item);
+      const name = document.createElement('div');
+      name.className = 'item-name';
+      name.textContent = item;
 
-      // Equippables
-      const kind = getEquipType(item);
+      const meta = document.createElement('div');
+      meta.className = 'item-meta';
+      if (kind === "weapon") meta.textContent = `Attack ${craftingRecipes[item].attackBoost}`;
+      else if (kind === "armor") meta.textContent = `Defense ${craftingRecipes[item].defenseBoost}`;
+      else meta.textContent = `Material`;
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.textContent = `x${qty}`;
+
+      const actions = document.createElement('div');
+      actions.className = 'inv-actions';
+
+      // Equip/Unequip for equippables
       if (kind) {
-        const equipped = isEquipped(item);
-        const btnText = equipped ? "Unequip" : "Equip";
-        div.innerHTML = `
-          <span class="has-tip" data-tip="${tip}">${item}${equipped ? " (equipped)" : ""}</span>
-          <span class='quantity'>x${inventory[item]}</span>
-          <button style="margin-left:8px" onclick="toggleEquip('${item}')">${btnText}</button>
-        `;
-        inventoryDiv.appendChild(div);
-        return;
+        const btn = document.createElement('button');
+        btn.className = 'btn-sm';
+        btn.textContent = equipped ? 'Unequip' : 'Equip';
+        btn.onclick = () => toggleEquip(item);
+        actions.appendChild(btn);
       }
 
-      // Plain materials
-      div.innerHTML = `
-        <span class="has-tip" data-tip="${tip}">${item}</span>
-        <span class='quantity'>x${inventory[item]}</span>
-      `;
-      inventoryDiv.appendChild(div);
+      // Use for consumables
+      const recip = craftingRecipes[item];
+      if (recip?.consumable === true) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-sm';
+        btn.textContent = 'Use';
+        btn.onclick = () => useConsumable(item);
+        actions.appendChild(btn);
+      }
+
+      // (Optional) Drop button
+      // const drop = document.createElement('button');
+      // drop.className = 'btn-sm btn-alt';
+      // drop.textContent = 'Drop';
+      // drop.onclick = () => { inventory[item] = Math.max(0, (inventory[item]||0) - 1); updateInventory(); saveGameData(); };
+      // actions.appendChild(drop);
+
+      card.append(top, name, meta, badge, actions);
+      grid.appendChild(card);
     });
+
+    inventoryDiv.appendChild(sec);
   };
 
-  // 3) Render sections in your preferred order
-  renderCategory("Weapons", categories.Weapons);
-  renderCategory("Armor", categories.Armor);
-  renderCategory("Consumables", categories.Consumables);
-  renderCategory("Materials", categories.Materials);
-
-  renderEquipmentPanel();
+  makeSection('Weapons', categories.Weapons);
+  makeSection('Armor', categories.Armor);
+  makeSection('Consumables', categories.Consumables);
+  makeSection('Materials', categories.Materials);
 }
 
 
