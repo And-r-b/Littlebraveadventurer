@@ -340,20 +340,16 @@ let equipment = {
 
 let playerHP = 100;
 
-// Items you can gather with the "Gather Resources button"
-const gatherableResources = [
-    { name: "Iron Ore", quantity: 1 },
-    { name: "Wood", quantity: 1 },
-    { name: "Leather", quantity: 1 },
-    { name: "Steel Ore", quantity: 1 }
-];
-
 // Making sure that if Item in inventory is 0 it will now show in inventory.
 let inventory = JSON.parse(localStorage.getItem("inventory")) || {
     "Iron Ore": 0,
+    "Iron Ingot": 0,
     "Wood": 0,
     "Leather": 0,
-    "Steel Ore": 0
+    "Steel Ingot": 0,
+    "Coal": 0,
+    "Herb": 0,
+    "Water": 0
 };
 
 let monster = {
@@ -544,10 +540,10 @@ const craftingRecipes = {
 
     "Iron Sword": {
         materials: {
-            "Iron Ore": 5,
+            "Iron Ingot": 5,
             "Wood": 3,
             "Leather": 3,
-            "Basic Sword": 1
+            "Training Sword": 1
         },
         result: "Iron Sword",
         attackBoost: 14
@@ -557,7 +553,7 @@ const craftingRecipes = {
         materials: {
             "Sharp Fang": 3,
             "Wood": 2,
-            "Iron Ore": 5
+            "Iron Ingot": 5
         },
         result: "Sharp-Fanged Blade",
         attackBoost: 16
@@ -568,7 +564,7 @@ const craftingRecipes = {
             "Rusty Dagger": 3,
             "Sticky Residue": 2,
             "Wood": 3,
-            "Iron Ore": 10
+            "Iron Ingot": 10
         },
         result: "Sharpend Goblin Blade",
         attackBoost: 20
@@ -576,8 +572,7 @@ const craftingRecipes = {
 
     "Steel Sword": {
         materials: {
-            "Steel Ore": 5,
-            "Iron Ore": 3,
+            "Steel Ingot": 5,
             "Leather": 3,
             "Iron Sword": 1
         },
@@ -589,7 +584,7 @@ const craftingRecipes = {
         materials: {
             "Orc Tooth": 5,
             "Iron Shard": 10,
-            "Steel Ore": 10
+            "Steel Ingot": 10
 
         },
         result: "Orcish Blade",
@@ -610,7 +605,7 @@ const craftingRecipes = {
     "Leather Armor": {
         materials: {
             "Leather": 3,
-            "Iron Ore": 1
+            "Iron Ingot": 1
         },
         result: "Leather Armor",
         defenseBoost: 5
@@ -626,7 +621,7 @@ const craftingRecipes = {
 
     "Iron Armor": {
         materials: {
-            "Iron Ore": 10,
+            "Iron Ingot": 10,
             "Leather Armor": 1 // Requires Leather Armor as material
         },
         result: "Iron Armor",
@@ -636,7 +631,7 @@ const craftingRecipes = {
     "Wolf Armor": {
         materials: {
             "Wolf Pelt": 10,
-            "Iron Ore": 10,
+            "Iron Ingot": 10,
             "Leather": 5
         },
         result: "Wolf Armor",
@@ -647,8 +642,8 @@ const craftingRecipes = {
         materials: {
             "Rusty Dagger": 5,
             "Sticky Residue": 2,
-            "Iron Ore": 5,
-            "Steel Ore": 10
+            "Iron Ingot": 5,
+            "Steel Ingot": 10
         },
         result: "Goblin-Made Armor",
         defenseBoost: 20
@@ -656,7 +651,7 @@ const craftingRecipes = {
 
     "Steel Armor": {
         materials: {
-            "Steel Ore": 10,
+            "Steel Ingot": 10,
             "Iron Armor": 1  // Requires Iron Armor as material
         },
         result: "Steel Armor",
@@ -668,7 +663,7 @@ const craftingRecipes = {
             "Leather": 5,
             "Orc Tooth": 10,
             "Iron Shard": 10,
-            "Steel Ore": 10
+            "Steel Ingot": 10
         },
         result: "Orcish Armor",
         defenseBoost: 27
@@ -724,10 +719,81 @@ const craftingRecipes = {
       result: "Strength Stew",
       consumable: true,
       effect: { buffAttack: 5, duration: 60 } // +5 attack for 60s
+    },
+
+    // Smelting
+    "Coal": {
+      materials: {
+        "Wood": 1
+      },
+      result: "Coal"
+    },
+
+     "Iron Ingot": {
+      materials: {
+        "Iron Ore": 2,
+        "Coal": 1
+      },
+      result: "Iron Ingot"
+    },
+
+    "Steel Ingot": {
+      materials: {
+        "Iron Ingot": 5,
+        "Coal": 1
+      },
+      result: "Steel Ingot"
     }
-
-
     // Add more upgrades here...
+};
+
+const ITEM_DESCRIPTIONS = {
+  // materials
+  "Iron Ore": "Material found underground, perfect for making weapons and armor from.",
+  "Steel Ingot": "No description yet.",
+  "Wood": "A strong material well-suited for many different uses.",
+  "Herb": "No description yet.",
+  "Water": "No description yet.",
+  "Coal": "No description yet.",
+  "Leather": "Gathered from various animals and processed into a usable material.",
+  "Iron Ingot": "No description yet.",
+  "Slime Goo": "No description yet.",
+  "Sticky Residue": "No description yet.",
+  "Wolf Pelt": "No description yet.",
+  "Sharp Fang": "No description yet.",
+  "Goblin Ear": "No description yet.",
+  "Rusty Dagger": "No description yet.",
+  "Orc Tooth": "No description yet.",
+  "Iron Shard": "No description yet.",
+  "Fox Hat": "No description yet.",
+  "Explosive Residue": "No description yet.",
+  "Wheat Straw": "No description yet.",
+
+  // weapons
+  "Training Sword": "A good piece of equipment for those just starting out",
+  "Slime Sword": "Strangely, it doesn’t cut as much as it…dissolves whatever it touches.",
+  "Iron Sword": "A fine weapon for an Adventurer",
+  "Sharp-Fanged Blade": "Made from the teeth of ferocious wolves. Packs an extra bite",
+  "Sharpend Goblin Blade": "A small, crude but very sharp knife, perfect for cutting other creatures",
+  "Steel Sword": "Sharp, well-balanced and all around a fine weapon",
+  "Orcish Blade": "A large blade, made with function over form.",
+  "Explosive Blade (Legendary)": "Is this….Isnt this just dynamite on a stick?",
+
+  // armor
+  "Leather Armor": "Provides adequate protection against basic weapons",
+  "Slime Armor": "Strikes seem to simply bounce off of you",
+  "Iron Armor": "Heavy, but offers better protection",
+  "Wolf Armor": "Faster, stronger and even better. But not harder",
+  "Goblin-Made Armor": "Strangely, you wear less, but feel more protected",
+  "Steel Armor": "High-.quality craftsmanship. Keeps you protected very well",
+  "Orcish Armor": "Abit outlandish, but feels great to wear",
+  "Special Fox Hat (Legendary)": "What is pain? There is only chaos. It kinda smells funny too",
+
+  // consumables
+  "Health Potion": "No description yet.",
+  "Good Health Potion": "No description yet.",
+  "Best Health Potion": "No description yet.",
+  "Strength Stew": "No description yet.",
 };
 
 // Function to display weapons or armor in the UI
@@ -741,6 +807,13 @@ function displayItems(itemCategory) {
             if (itemCategory === 'weapons') return recipe.attackBoost !== undefined;
             if (itemCategory === 'armor') return recipe.defenseBoost !== undefined;
             if (itemCategory === 'consumables') return recipe.consumable === true;
+            if (itemCategory === 'smelting') {
+                return (
+                    recipe.attackBoost === undefined &&
+                    recipe.defenseBoost === undefined &&
+                    recipe.consumable !== true
+                );
+            }
             return false;
         });
 
@@ -770,6 +843,8 @@ function displayItems(itemCategory) {
     });
 }
 
+
+
 // Event listeners for "Weapons" and "Armor" buttons
 document.getElementById('weapons').addEventListener('click', () => {
     displayItems('weapons');  // Display weapons
@@ -781,6 +856,10 @@ document.getElementById('armor').addEventListener('click', () => {
 
 document.getElementById('consumables').addEventListener('click', () => {
   displayItems('consumables'); // Display Consumables
+});
+
+document.getElementById('smelting').addEventListener('click', () => {
+  displayItems('smelting'); // Display Smelting
 });
 
 // Function on how to craft items
@@ -814,9 +893,12 @@ function craftItem(itemName) {
             updatePlayerStats();
             saveGameData();
 
-            alert(`You crafted a ${itemName}!`);
+            openInfoModal('Crafting Complete', `You crafted a ${itemName}!`);
         } else {
-            alert("You don't have enough materials to craft this.");
+            const needList = Object.entries(recipe.materials)
+             .map(([mat, amt]) => `${amt} ${mat}`)
+            .join(', ');
+            openInfoModal('Not enough materials', `You need: ${needList}`);
         }
     }
 }
@@ -914,7 +996,7 @@ function renderCraftingUI() {
 
 // Gathering Process with Persistent Timer
 
-let gatherCooldown = 600; // 10 minutes in seconds
+let gatherCooldown = 1; // 10 minutes in seconds
 let gatherButton = document.getElementById("gatherButton");
 let gatherLabel  = gatherButton.querySelector(".label");
 let messageElement = document.getElementById("message");
@@ -967,7 +1049,7 @@ function gatherResource() {
 }
 
 function giveGatherReward() {
-    const availableResources = ["Iron Ore", "Wood", "Leather", "Steel Ore", "Water"];
+    const availableResources = ["Iron Ore", "Wood", "Leather", "Water", "Herb"];
     let gatheredItems = {};
     let totalItems = 10; // Maximum number of items the player can receive
 
@@ -1004,8 +1086,8 @@ function giveGatherReward() {
 
     // Only display a message if something was gathered
     if (gatheredMessage) {
-        messageElement.innerText = `You gathered: ${gatheredMessage}!`;
-        messageElement.style.display = "block";
+        openInfoModal('Gathering Complete', `You gathered: ${gatheredMessage}!`);
+        if (messageElement) messageElement.style.display = "none"; // hide old text, just in case
     }
 }
 
@@ -1181,8 +1263,9 @@ function updateInventory(newLoot = "") {
     // --- Consumable handling ---
     const recipe = craftingRecipes[item];
     if (recipe && recipe.consumable === true) {
+      const tip = ITEM_DESCRIPTIONS[item] || "";
       div.innerHTML = `
-        <span>${item}</span>
+        <span class="has-tip" data-tip="${tip}">${item}</span>
         <span class='quantity'>x${inventory[item]}</span>
         <button onclick="useConsumable('${item}')">Use</button>
       `;
@@ -1194,12 +1277,17 @@ function updateInventory(newLoot = "") {
     const kind = getEquipType(item);
     if (!kind) {
       // Plain material/loot
-      div.innerHTML = `<span>${item}</span> <span class='quantity'>x${inventory[item]}</span>`;
+      const tip = ITEM_DESCRIPTIONS[item] || "";
+      div.innerHTML = `
+        <span class="has-tip" data-tip="${tip}">${item}</span>
+        <span class='quantity'>x${inventory[item]}</span>
+      `;
     } else {
       const equipped = isEquipped(item);
       const btnText = equipped ? "Unequip" : "Equip";
+      const tip = ITEM_DESCRIPTIONS[item] || "";
       div.innerHTML = `
-        <span>${item}${equipped ? " (equipped)" : ""}</span>
+        <span class="has-tip" data-tip="${tip}">${item}${equipped ? " (equipped)" : ""}</span>
         <span class='quantity'>x${inventory[item]}</span>
         <button style="margin-left:8px" onclick="toggleEquip('${item}')">${btnText}</button>
       `;
@@ -1835,6 +1923,18 @@ function openResultModal(outcome, monsterName, dropName = null) {
   resultPrimary.onclick = closeResultModal; // OK just closes
 
   // show
+  modalBackdrop.hidden = false;
+  resultModal.hidden = false;
+  document.body.classList.add('modal-open');
+}
+
+// Generic info modal (reuse the same DOM)
+function openInfoModal(title, text, primaryLabel = "OK") {
+  resultTitle.textContent = title;
+  resultText.textContent  = text;
+  resultPrimary.textContent = primaryLabel;
+  resultPrimary.onclick = closeResultModal;
+
   modalBackdrop.hidden = false;
   resultModal.hidden = false;
   document.body.classList.add('modal-open');
