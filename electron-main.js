@@ -46,8 +46,14 @@ function createWindow() {
     icon: path.join(__dirname, 'icons', 'smallknight.ico')
   });
 
+   win.on('enter-full-screen', () => {
+    win.webContents.send('fullscreen-changed', true);
+  });
+  win.on('leave-full-screen', () => {
+    win.webContents.send('fullscreen-changed', false);
+  });
+
   win.loadFile('index.html');
-  
 }
 
 app.whenReady().then(() => {

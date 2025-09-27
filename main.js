@@ -310,6 +310,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (firstList.length) applySelectedMonster(firstList[0]);
   }
 
+  // --- Fullscreen toggle button (Settings) ---
+const fsBtn = document.getElementById('toggleFullscreenBtn');
+if (fsBtn && window.electronAPI?.toggleFullScreen) {
+  // initialize label to actual state (optional)
+  try {
+    window.electronAPI.getFullScreenState?.().then(isFull => {
+      fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
+    });
+  } catch {}
+
+  fsBtn.addEventListener('click', async () => {
+    try {
+      const isFull = await window.electronAPI.toggleFullScreen();
+      // update label so player sees what they'll switch to next
+      fsBtn.textContent = isFull ? 'Windowed' : 'Fullscreen';
+    } catch (e) {
+      console.error('Toggle fullscreen failed', e);
+    }
+  });
+}
+
   updateSelectionStatus();
 });
 

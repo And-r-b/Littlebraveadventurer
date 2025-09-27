@@ -154,24 +154,74 @@
   </div>
 <div id="modalBackdrop" hidden></div>
 
-<div id="settingsModal" hidden>
-  <button id="settingsCloseBtn" aria-label="Close settings">✖</button>
-  <h2>Settings</h2>
-  <label for="musicToggle">Music:</label>
-  <input type="checkbox" id="musicToggle" checked />
-  <label for="musicVolume">Volume:</label>
-  <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1" />
-  <br />
+<div id="settingsModal" class="settings-modal" hidden>
+  <header class="settings-header">
+    <h2>Settings</h2>
+    <button id="settingsCloseBtn" aria-label="Close settings">✖</button>
+  </header>
 
-  <label for="soundToggle">Sound Effects:</label>
-  <input type="checkbox" id="soundToggle" checked />
-  <label for="soundEffectVolume">Volume:</label>
-  <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="0.5" />
-  <br />
+  <section class="settings-section">
+    <h3>Audio</h3>
+    <div class="row">
+      <label class="row-label">
+        <span>Music</span>
+        <small>Enable background music</small>
+      </label>
+      <div class="row-control">
+        <input type="checkbox" id="musicToggle" />
+      </div>
+    </div>
+    <div class="row">
+      <label class="row-label">
+        <span>Music Volume</span>
+        <small>Level for background music</small>
+      </label>
+      <div class="row-control">
+        <input type="range" id="musicVolume" min="0" max="1" step="0.01" />
+      </div>
+    </div>
 
-  <button id="saveNowButton">Save Game</button>
-  <button onclick="startNewGame()">Reset Game</button>
-  <button id="quitGameButton">Quit Game</button>
+    <div class="row">
+      <label class="row-label">
+        <span>Sound Effects</span>
+        <small>Enable action sounds</small>
+      </label>
+      <div class="row-control">
+        <input type="checkbox" id="soundToggle" />
+      </div>
+    </div>
+    <div class="row">
+      <label class="row-label">
+        <span>SFX Volume</span>
+        <small>Level for effects</small>
+      </label>
+      <div class="row-control">
+        <input type="range" id="sfxVolume" min="0" max="1" step="0.01" />
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3>Gameplay</h3>
+    <div class="row">
+      <label class="row-label">
+        <span>Full Screen</span>
+        <small>Toggle borderless fullscreen</small>
+      </label>
+      <div class="row-control">
+        <button id="toggleFullscreenBtn" class="btn ghost">Toggle</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3>System</h3>
+    <div class="actions">
+      <button class="btn ghost" id="saveNowButton">Save Game</button>
+      <button class="btn primary" onclick="startNewGame()">Reset Game</button>
+      <button class="btn danger" id="quitGameButton">Quit Game</button>
+    </div>
+  </section>
 </div>
 
 <!-- Battle Result Modal -->
