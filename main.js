@@ -2584,6 +2584,7 @@ function renderBuffBar() {
   for (const b of buffs) {
     const el = document.createElement('div');
     el.className = 'buff-badge';
+    el.setAttribute('data-buff', b.name);
     el.innerHTML = `
       <img src="${b.icon}" alt="${b.name}">
       <span class="buff-timer" id="buffTimer-${b.name.replace(/\s+/g,'')}">${mmss(b.left)}</span>
