@@ -109,52 +109,64 @@ function stopTitleMusic(fadeTime = 2000) {
     }, fadeInterval);
 }
 
-let gameplayMusic;
+// ---- Gameplay "Radio" (multiple tracks with gaps) ----
+const GAMEPLAY_TRACKS = [
+  asset("sounds/gameplay1.mp3"),
+  asset("sounds/gameplay2.mp3"),
+  asset("sounds/gameplay3.mp3"),
+  asset("sounds/gameplay4.mp3"),
+  asset("sounds/gameplay5.mp3"),
+];
 
-function setupGameplayMusic() {
-    const musicEnabled = localStorage.getItem("musicEnabled") === "true";
-    if (!musicEnabled) return;
+const gameplayRadio = {
+  audio: null,
+  lastIndex: -1,
+  gapTimer: null,
+  minGapMs: 20000, // 20s
+  maxGapMs: 45000, // 45s
+};
 
-    if (gameplayMusic) {
-        gameplayMusic.pause();
-        gameplayMusic = null;
-    }
-
-    gameplayMusic = new Audio(asset("sounds/gameplaymusic.mp3"));
-    gameplayMusic.loop = false; // don't loop automatically
-    gameplayMusic.volume = musicVolume;
-
-    gameplayMusic.addEventListener("ended", () => {
-        // wait 30 seconds before starting again
-        setTimeout(() => {
-            if (localStorage.getItem("musicEnabled") === "true") {
-                setupGameplayMusic();
-            }
-        }, 30000); // 30000 ms = 30 seconds
-    });
-
-    gameplayMusic.play().catch((err) => {
-        console.warn("Gameplay music couldn't auto-play:", err);
-    });
+function startGameplayRadio() {
+  if (localStorage.getItem("musicEnabled") !== "true") return;
+  if (gameplayRadio.audio && !gameplayRadio.audio.paused) return;
+  if (gameplayRadio.gapTimer) return;
+  playNextGameplayTrack();
 }
 
-function stopGameplayMusic(fadeTime = 2000) {
-    if (!gameplayMusic) return;
+function stopGameplayRadio(fadeMs = 1000) {
+  if (gameplayRadio.gapTimer) { clearTimeout(gameplayRadio.gapTimer); gameplayRadio.gapTimer = null; }
+  const a = gameplayRadio.audio;
+  if (!a) return;
+  const steps = 20, step = (a.volume || musicVolume) / steps, iv = setInterval(()=>{ a.volume = Math.max(0, a.volume - step); }, fadeMs/steps);
+  setTimeout(()=>{ clearInterval(iv); try{ a.pause(); }catch{} gameplayRadio.audio = null; }, fadeMs);
+}
 
-    const fadeSteps = 20;
-    const fadeInterval = fadeTime / fadeSteps;
-    let currentStep = 0;
+function playNextGameplayTrack() {
+  if (!GAMEPLAY_TRACKS.length) return;
+  let idx = Math.floor(Math.random() * GAMEPLAY_TRACKS.length);
+  if (GAMEPLAY_TRACKS.length > 1 && idx === gameplayRadio.lastIndex) idx = (idx + 1) % GAMEPLAY_TRACKS.length;
+  gameplayRadio.lastIndex = idx;
 
-    const fade = setInterval(() => {
-        currentStep++;
-        gameplayMusic.volume = Math.max(0, gameplayMusic.volume - (musicVolume / fadeSteps));
+  if (gameplayRadio.audio) try { gameplayRadio.audio.pause(); } catch {}
+  const a = new Audio(GAMEPLAY_TRACKS[idx]);
+  gameplayRadio.audio = a;
+  a.loop = false;
+  a.volume = musicVolume;
 
-        if (currentStep >= fadeSteps) {
-            clearInterval(fade);
-            gameplayMusic.pause();
-            gameplayMusic.currentTime = 0;
-        }
-    }, fadeInterval);
+  a.addEventListener("ended", () => {
+    const gap = Math.floor(Math.random() * (gameplayRadio.maxGapMs - gameplayRadio.minGapMs + 1)) + gameplayRadio.minGapMs;
+    gameplayRadio.gapTimer = setTimeout(() => {
+      gameplayRadio.gapTimer = null;
+      if (localStorage.getItem("musicEnabled") === "true") playNextGameplayTrack();
+    }, gap);
+  });
+
+  a.play().catch(err => console.warn("Gameplay radio couldn't start:", err));
+}
+
+function startGameplayAfterFade(delayMs = 2100) {
+  stopTitleMusic();
+  setTimeout(() => startGameplayRadio(), delayMs);
 }
 
 // IDs you already use (adjust if yours differ)
@@ -228,6 +240,9 @@ function enterGameWithTransition() {
     hide($(START_ID));
     show($(GAME_ID));
   });
+
+  // start gameplay music right after the crossfade transition
+  startGameplayAfterFade(0);   // 0ms because the overlay already handled the fade
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -410,7 +425,7 @@ async function continueFromMenu() {
 
   // music swap
   stopTitleMusic?.();
-  setTimeout(() => setupGameplayMusic?.(), 200);
+  startGameplayRadio?.();
 }
 
 // Global variables and starter kit
@@ -927,23 +942,23 @@ const craftingRecipes = {
         consumable: true,
         effect: { heal: 20 }
     },
-     "Good Health Potion": {
+     "Major Health Potion": {
         materials: {
           "Herb": 5,
           "Water": 3,
           "Slime Goo": 3
         },
-        result: "Good Health Potion",
+        result: "Major Health Potion",
         consumable: true,
         effect: { heal: 50 }
     },
-    "Best Health Potion": {
+    "Grand Health Potion": {
         materials: {
           "Herb": 10,
           "Water": 5,
           "Slime Goo": 5
         },
-        result: "Best Health Potion",
+        result: "Grand Health Potion",
         consumable: true,
         effect: { heal: 75 }
     },
@@ -990,24 +1005,25 @@ const craftingRecipes = {
 const ITEM_DESCRIPTIONS = {
   // materials
   "Iron Ore": "Material found underground, perfect for making weapons and armor from.",
-  "Steel Ingot": "No description yet.",
+  "Steel Ingot": "Made as a bi-product in ironmaking. A much better material",
   "Wood": "A strong material well-suited for many different uses.",
-  "Herb": "No description yet.",
-  "Water": "No description yet.",
-  "Coal": "No description yet.",
+  "Herb": "A fragrant plant, with strange properties",
+  "Meat": "Good source of protein. Fills up your stomach well",
+  "Water": "Refreshing. Perfect for a nice cold drink",
+  "Coal": "After a long time underground, under constant pressure, it’s well suited for many applications",
   "Leather": "Gathered from various animals and processed into a usable material.",
-  "Iron Ingot": "No description yet.",
-  "Slime Goo": "No description yet.",
-  "Sticky Residue": "No description yet.",
-  "Wolf Pelt": "No description yet.",
-  "Sharp Fang": "No description yet.",
-  "Goblin Ear": "No description yet.",
-  "Rusty Dagger": "No description yet.",
-  "Orc Tooth": "No description yet.",
-  "Iron Shard": "No description yet.",
-  "Fox Hat": "No description yet.",
-  "Explosive Residue": "No description yet.",
-  "Wheat Straw": "No description yet.",
+  "Iron Ingot": "A material perfectly suited for those in need of either tools, weapons or armor",
+  "Slime Goo": "Remnants of Slimes. Kinda springy and bouncy",
+  "Sticky Residue": "Perfect for putting two things together that shouldn’t move",
+  "Wolf Pelt": "A full usable pelt. Works well in making things",
+  "Sharp Fang": "Ouch! Its really sharp, be careful",
+  "Goblin Ear": "It’s long and it’s green. Just don’t eat it",
+  "Rusty Dagger": "Not sharp, but make sure you don’t get cut by it",
+  "Orc Tooth": "A gnarly looking tooth, not well kept",
+  "Iron Shard": "Collect enough and you’ll almost have something useful",
+  "Fox Hat": "It’s weird…It almost looks good",
+  "Explosive Residue": "What even is this? Some kind of powder?",
+  "Wheat Straw": "Eugh, it’s so…wet…",
 
   // weapons
   "Training Sword": "A good piece of equipment for those just starting out",
@@ -1030,10 +1046,10 @@ const ITEM_DESCRIPTIONS = {
   "Special Fox Hat (Legendary)": "What is pain? There is only chaos. It kinda smells funny too",
 
   // consumables
-  "Health Potion": "No description yet.",
-  "Good Health Potion": "No description yet.",
-  "Best Health Potion": "No description yet.",
-  "Strength Stew": "No description yet.",
+  "Health Potion": "A thick, red liquid. Doesn’t taste too bad (Heals for 25 HP)",
+  "Major Health Potion": "A thick red liquid, with what seems to be some sparkles in it (Heals for 50 HP)",
+  "Grand Health Potion": "A thick red liquid, containing some kind of magic (Heals for 75 HP)",
+  "Strength Stew": "A mix of vegetables and meat. Fills the stomach and warms the heart(Increases damage dealt by 5 for 5 minutes)",
 };
 
 // Descriptions for skills
@@ -1088,8 +1104,8 @@ const ITEM_ICONS = {
 
   // consumables
   "Health Potion": "images/items/health-potion.png",
-  "Good Health Potion": "images/items/fox-hat.png",
-  "Best Health Potion": "images/items/fox-hat.png",
+  "Major Health Potion": "images/items/health-potion.png",
+  "Grand Health Potion": "images/items/health-potion.png",
   "Strength Stew": "images/items/fox-hat.png",
 };
 
@@ -1638,9 +1654,7 @@ function selectStarterKit(starter) {
     renderEquipmentSlots?.();
     renderEquipmentPanel?.();
     updateInventory?.();
-
-    stopTitleMusic?.();
-    setTimeout(() => setupGameplayMusic?.(), 2100);
+    startGameplayAfterFade(2100);
     return;
   }
 
@@ -1673,8 +1687,7 @@ function selectStarterKit(starter) {
 
   saveGameData?.();                   // persist starter choice
 
-  stopTitleMusic?.();
-  setTimeout(() => setupGameplayMusic?.(), 2100);
+  startGameplayAfterFade(2100);
 }
 
 function checkStarterKitSelection() {
@@ -1773,7 +1786,8 @@ function updateInventory(newLoot = "") {
       const top = iconEl(item);
       const name = document.createElement('div');
       name.className = 'item-name';
-      name.textContent = item;
+      const desc = ITEM_DESCRIPTIONS?.[item] || '';
+      name.innerHTML = `<span class="has-tip" data-tip="${desc}">${item}</span>`;
 
       const meta = document.createElement('div');
       meta.className = 'item-meta';
@@ -2137,24 +2151,56 @@ function syncSettingsUIFromStorage() {
   sfxSlider.value   = isNaN(savedSfxVol)   ? 0.3 : savedSfxVol;
 }
 
+// --- Live volume updates ---
+const musicSlider = document.getElementById("musicVolume");
+if (musicSlider) {
+  musicSlider.addEventListener("input", (e) => {
+    musicVolume = parseFloat(e.target.value);
+    localStorage.setItem("musicVolume", String(musicVolume));
+
+    if (titleMusic) titleMusic.volume = musicVolume;
+    if (gameplayRadio?.audio) gameplayRadio.audio.volume = musicVolume; // ✅ use radio
+  });
+}
+
+const sfxSlider = document.getElementById("sfxVolume");
+if (sfxSlider) {
+  sfxSlider.addEventListener("input", (e) => {
+    sfxVolume = parseFloat(e.target.value);
+    localStorage.setItem("sfxVolume", String(sfxVolume));
+  });
+}
+
 function isSettingsOpen() {
   return settingsEl && !settingsEl.hasAttribute("hidden") && getComputedStyle(settingsEl).display !== "none";
 }
 // ---- Save toggles ----
-document.getElementById("musicToggle").addEventListener("change", function () {
-  localStorage.setItem("musicEnabled", this.checked);
-  if (this.checked) {
-    // start whichever music should be active
-    if (document.getElementById("gameContent").style.display === "block") {
-      setupGameplayMusic();
+// Music toggle
+const musicToggle = document.getElementById("musicToggle");
+if (musicToggle) {
+  musicToggle.checked = localStorage.getItem("musicEnabled") === "true";
+  musicToggle.addEventListener("change", function () {
+    localStorage.setItem("musicEnabled", this.checked);
+
+    if (this.checked) {
+      if (document.getElementById("gameContent").style.display === "block") {
+        startGameplayRadio();   // ✅ new
+      } else {
+        setupTitleMusic();
+      }
     } else {
-      setupTitleMusic();
+      stopTitleMusic();
+      stopGameplayRadio();      // ✅ new
     }
-  } else {
-    stopTitleMusic();
-    stopGameplayMusic();
-  }
-});
+  });
+}
+
+function markHasPlayed(){ localStorage.setItem('hasPlayed','1'); }
+
+function startGameplayAfterFade(delayMs = 2100) {
+  stopTitleMusic();
+  setTimeout(() => startGameplayRadio(), delayMs);
+}
 
 document.getElementById("soundToggle").addEventListener("change", function () {
   localStorage.setItem("soundEnabled", this.checked);
