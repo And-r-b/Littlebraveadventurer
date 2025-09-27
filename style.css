@@ -1164,4 +1164,7 @@ body.modal-open {
     --arena-h: 68vh;
     --sprite-h: 48vh;
   }
+   body {
+    overflow-y: auto;
+  }
 }
