@@ -1069,7 +1069,7 @@ const ITEM_ICONS = {
   "Steel Ingot": "images/items/steel-ingot.png",
   "Wood": "images/items/wood.png",
   "Leather": "images/items/leather.png",
-  "Water": "images/items/water-drop.png",
+  "Water": "images/items/water.png",
   "Herb": "images/items/herb.png",
   "Coal": "images/items/coal.png",
   "Slime Goo": "images/items/slime-goo.png",
@@ -1080,6 +1080,7 @@ const ITEM_ICONS = {
   "Rusty Dagger": "images/items/rusty-dagger.png",
   "Iron Shard": "images/items/iron-shard.png",
   "Orc Tooth": "images/items/orc-tooth.png",
+  "Fox Hat": "images/items/fox-hat.png",
   "Wheat Straw": "images/items/wheat.png",
   "Explosive Residue": "images/items/explosive.png",
 
