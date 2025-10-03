@@ -1105,9 +1105,9 @@ const ITEM_ICONS = {
 
   // consumables
   "Health Potion": "images/items/health-potion.png",
-  "Major Health Potion": "images/items/health-potion.png",
-  "Grand Health Potion": "images/items/health-potion.png",
-  "Strength Stew": "images/items/fox-hat.png",
+  "Major Health Potion": "images/items/major-health-potion.png",
+  "Grand Health Potion": "images/items/grand-health-potion.png",
+  "Strength Stew": "images/items/strength-stew.png",
 };
 
 // === SKILL DEFINITIONS ===
