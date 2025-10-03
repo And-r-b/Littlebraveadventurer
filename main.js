@@ -1113,7 +1113,7 @@ const ITEM_ICONS = {
 // === SKILL DEFINITIONS ===
 const SKILL_DEFS = {
   Pray: {
-    icon: "icons/png/Skills.png",
+    icon: "images/items/pray.png",
     desc: "Heal 50 HP instantly. Cooldown: 5 min",
     duration: 0,       // instant
     cooldown: 300,     // seconds
@@ -1133,7 +1133,7 @@ const SKILL_DEFS = {
   },
 
   Bulwark: {
-    icon: "icons/png/Skills.png",
+    icon: "images/items/bulwark.png",
     desc: "Halve incoming damage. Duration: 30s. CD: 120s",
     duration: 30,
     cooldown: 120,
@@ -1151,7 +1151,7 @@ const SKILL_DEFS = {
   },
 
   Acceleration: {
-    icon: "icons/png/Skills.png",
+    icon: "images/items/acceleration.png",
     desc: "Gain an extra attack each tick. Dur: 15s. CD: 90s",
     duration: 15,
     cooldown: 90,
@@ -1169,7 +1169,7 @@ const SKILL_DEFS = {
   },
 
   Empower: {
-    icon: "icons/png/Skills.png",
+    icon: "images/items/empower.png",
     desc: "+10 Attack. Duration: 20s. CD: 60s",
     duration: 20,
     cooldown: 60,
