@@ -4,6 +4,13 @@ const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron'); // 
 const path = require('path');
 const fs = require('fs');
 
+
+const isWin = process.platform === 'win32';
+const nativeDir = isWin
+  ? path.join(process.resourcesPath, 'win64') // where we’ll pack steam_api64.dll
+  : process.resourcesPath;
+
+process.env.STEAMWORKS_NATIVE_PATH = nativeDir;
 // For Dev Testing for sound.
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
