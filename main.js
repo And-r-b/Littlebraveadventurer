@@ -8,13 +8,34 @@ try {
 } catch (e) {
   console.warn('[Steam] Steam not initialized:', e?.message || e);
 }
+const _achGivenThisSession = new Set(); // avoid spamming same unlock
 
 // Small helper to unlock an achievement safely
 function unlockAchievement(apiName) {
-  if (!steamClient) return false;
-  const ok = steamClient.achievement.activate(apiName);
-  if (steamClient.achievement.store) steamClient.achievement.store();
-  return ok;
+  try {
+    if (!steamClient) {
+      console.warn('[Steam] unlock skipped; client not ready:', apiName);
+      return false;
+    }
+    // Optional de-dupe (session-level). Steam ignores repeats anyway,
+    // but this keeps logs clean and avoids unnecessary store() calls.
+    if (_achGivenThisSession.has(apiName)) {
+      console.log('[Steam] already attempted this session:', apiName);
+      return false;
+    }
+
+    const ok = !!steamClient.achievement?.activate?.(apiName);
+    console.log('[Steam] activate', apiName, '->', ok);
+
+    // Always store after any activate attempt
+    steamClient.achievement?.store?.();
+
+    if (ok) _achGivenThisSession.add(apiName);
+    return ok;
+  } catch (e) {
+    console.error('[Steam] unlock error', apiName, e);
+    return false;
+  }
 }
 
 
@@ -1644,6 +1665,7 @@ function selectStarterKit(starter) {
   if (hasExistingEquip) {
     hasSelectedStarter = true;
     selectedStarter = localStorage.getItem("starterKit");
+    giveStarterAchievementOnce();
 
     crossfadeSwap(() => {
       document.getElementById("starterSelection").style.display = "none";
@@ -1669,7 +1691,7 @@ function selectStarterKit(starter) {
     equipment = { weapon: "Stick", attack: 5, armor: "Clothes", defense: 0 };
   }
 
-  unlockAchievement?.('ACH_CHOSE_STARTER');
+  giveStarterAchievementOnce();
 
   // Enter the game and init monster/background/sfx AFTER game is visible
   crossfadeSwap(() => {
@@ -1909,6 +1931,14 @@ function startCountdown(seconds, onTick, onDone) {
     else { clearInterval(t); onDone(); }
   }, 1000);
   return t;
+}
+
+function giveStarterAchievementOnce() {
+  try {
+    if (localStorage.getItem('starterAchGiven') === '1') return;
+    const ok = unlockAchievement('ACH_CHOSE_STARTER');
+    if (ok) localStorage.setItem('starterAchGiven', '1');
+  } catch {}
 }
 
 function setSkillUI(idBtn, idCd, enabled, text, showCd, cdText) {
@@ -2290,6 +2320,25 @@ function resetMonsterBar(monsterName) {
   }
 }
 
+function awardKillAchievements(monsterType) {
+  switch (monsterType) {
+    case 'Slime':
+      unlockAchievement('ACH_FIRST_SLIME');
+      break;
+    case 'Wolf':
+      unlockAchievement('ACH_FIRST_WOLF');
+      break;
+    case 'Goblin':
+      unlockAchievement('ACH_FIRST_GOBLIN');
+      break;
+    case 'Orc':
+      unlockAchievement('ACH_FIRST_ORC');
+      break;
+    case 'Angus': // boss
+      unlockAchievement('ACH_ANGUS_SLAYER');
+      break;
+  }
+}
 
 
 // Fighting Function
@@ -2370,26 +2419,6 @@ function fightMonster() {
       return;
     }
   }, 1000);
-}
-
-function awardKillAchievements(monsterType) {
-  switch (monsterType) {
-    case 'Slime':
-      unlockAchievement('ACH_FIRST_SLIME');
-      break;
-    case 'Wolf':
-      unlockAchievement('ACH_FIRST_WOLF');
-      break;
-    case 'Goblin':
-      unlockAchievement('ACH_FIRST_GOBLIN');
-      break;
-    case 'Orc':
-      unlockAchievement('ACH_FIRST_ORC');
-      break;
-    case 'Angus': // boss
-      unlockAchievement('ACH_ANGUS_SLAYER');
-      break;
-  }
 }
 
 // Reset button to start new game - Pop Alert
