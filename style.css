@@ -214,13 +214,15 @@ body {
 }
 
   /* Game Layout: Inventory (Left) + Fight Container (Right) */
-  .game-layout {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin: 20px auto;
-    transition: all 0.5s ease-in-out;
-    position: relative;
+.game-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; /* was center */
+  gap: 20px;                   /* space between inventory & fight */
+  width: 100%;
+  margin: 20px auto;
+  position: relative;
+  transition: all 0.5s ease-in-out;
 }
 
 /* === Active Buffs HUD === */
@@ -253,16 +255,27 @@ body {
 }
 
 #inventoryContainer {
-  background-color: rgba(0, 0, 0, 0.8); /* Darker background */
-  border: 2px solid white; /* White border for contrast */
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 2px solid white;
   padding: 10px;
-  border-radius: 10px; /* Rounded edges */
-  width: 300px;
-  max-height: 600px;
-  overflow-y: auto;
+  border-radius: 10px;
+
+  /* make it a wider, fixed sidebar */
+  flex: 0 0 460px;   /* adjust 460px to taste */
+  width: auto;       /* ignore old fixed width */
+  max-height: 600px; /* or match your arena height var if you have one */
+  overflow: auto;
   scrollbar-width: thin;
-  color: white; /* Ensure text is visible */
-  margin-right: 20px;
+
+  color: white;
+  margin-right: 0;   /* gap now handles spacing */
+}
+
+.fight-container {
+  flex: 1 1 0;
+  max-width: 860px;   /* tweak 820–920px to taste */
+  margin-inline: auto;/* centers the arena when inventory is hidden */
+  min-width: 0;
 }
 
 #inventoryContainer::-webkit-scrollbar {
@@ -1184,8 +1197,12 @@ body.modal-open {
 
 .inv-grid, .craft-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
   gap: 10px;
+}
+
+.inv-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* wider cards = more columns */
 }
 
 .inv-card, .craft-card{
@@ -1249,4 +1266,21 @@ body.modal-open {
    body {
     overflow-y: auto;
   }
+}
+
+@media (min-width: 1400px) {
+  .inv-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+   .fight-container {
+    max-width: 920px; 
+  }
+}
+
+@media (max-width: 1200px) {
+  #inventoryContainer { flex-basis: 380px; }
+}
+
+@media (max-width: 900px) {
+  #inventoryContainer { flex-basis: 320px; }
 }
