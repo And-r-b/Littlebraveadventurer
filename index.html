@@ -62,26 +62,36 @@
     <!-- Game Layout: Inventory + Fight Container -->
     <div class="game-layout">
       <!-- Inventory Section -->
-      <div id="inventoryContainer" style="display: none;">
-          <div id="equipmentPanel">
-            <h2>Equipped</h2>
-            <div class="equip-slot">
-              <span class="label">Weapon</span>
-              <span id="equipPanelWeapon">None</span>
-            </div>
-            <div class="equip-slot">
-              <span class="label">Armor</span>
-              <span id="equipPanelArmor">None</span>
-            </div>
-            <div class="equip-stats">
-              <div>Attack: <span id="equipPanelAttack">5</span></div>
-              <div>Defense: <span id="equipPanelDefense">0</span></div>
-            </div>
+      <!-- ✅ Correct structure -->
+      <div id="inventoryContainer" style="display:none;">
+        <section id="equipPanel" class="equip-panel">
+          <h3>Equipped</h3>
+
+          <div class="equip-grid">
+            <button class="equip-slot" data-slot="weapon">
+              <span class="slot-label">Weapon</span>
+              <span class="slot-item" id="eqWeapon">Stick</span>
+            </button>
+
+            <button class="equip-slot" data-slot="armor">
+              <span class="slot-label">Armor</span>
+              <span class="slot-item" id="eqArmor">Clothes</span>
+            </button>
+
+            <button class="equip-slot disabled"><span class="slot-label">Helmet</span><span class="slot-item">—</span></button>
+            <button class="equip-slot disabled"><span class="slot-label">Accessory</span><span class="slot-item">—</span></button>
           </div>
-          <div id="inventory">
-              <h2>Inventory</h2>
+
+          <div class="equip-stats">
+            Attack: <span id="statAtk">5</span> • Defense: <span id="statDef">0</span>
           </div>
-      </div>
+        </section>
+
+        <!-- ⬇️ Move this inside the container -->
+        <div id="inventory">
+          <h2>Inventory</h2>
+        </div>
+      </div>    
       
       <!-- Crafting Section (Initially hidden) -->
       <div id="craftingContainer" style="display: none;">
