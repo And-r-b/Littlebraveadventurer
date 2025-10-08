@@ -265,5 +265,34 @@
     <button id="amConfirm" class="btn btn-pri">Confirm</button>
   </div>
 </div>
+
+<div id="craftQtyModal" class="craftqty-modal" hidden>
+  <header class="cq-header">
+    <h3 id="craftQtyTitle">Craft</h3>
+    <button id="craftQtyClose" class="cq-x" aria-label="Close">✖</button>
+  </header>
+
+  <div class="cq-body">
+    <div class="cq-row">
+      <span>Max craftable</span>
+      <strong id="craftQtyMax">0</strong>
+    </div>
+
+    <div class="cq-row">
+      <label for="craftQtyInput">Quantity</label>
+      <div class="cq-qty">
+        <input id="craftQtyInput" type="number" min="1" value="1" />
+        <button id="craftQtyMaxBtn" class="btn-sm" type="button">MAX</button>
+      </div>
+    </div>
+
+    <div id="craftQtyMaterials" class="cq-mats"></div>
+  </div>
+
+  <footer class="cq-actions">
+    <button id="craftQtyCancel" class="btn btn-sec" type="button">Cancel</button>
+    <button id="craftQtyConfirm" class="btn btn-pri" type="button">Craft</button>
+  </footer>
+</div>
 </body>
 </html>

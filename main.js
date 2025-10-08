@@ -1308,6 +1308,112 @@ function iconEl(name){
   return wrap;
 }
 
+
+// ---- Craft Quantity Modal ----
+let craftQtyState = { item: null, max: 0 };
+
+function computeMaxCraftable(recipe){
+  let max = Infinity;
+  for (const [mat, need] of Object.entries(recipe.materials)){
+    const have = inventory[mat] || 0;
+    max = Math.min(max, Math.floor(have / need));
+  }
+  return isFinite(max) ? Math.max(0, max) : 0;
+}
+
+function setCraftQtyUI(q){
+  const r = craftingRecipes[craftQtyState.item];
+  const matBox = document.getElementById('craftQtyMaterials');
+  const lines = Object.entries(r.materials).map(([m, amt])=>{
+    const need = amt * q;
+    const have = inventory[m] || 0;
+    const ok = have >= need;
+    return `<div>${m}: ${need} (you have ${have}) ${ok ? '' : '❗'}</div>`;
+  });
+  matBox.innerHTML = `<strong>Materials for ${q}×</strong><br>${lines.join('')}`;
+
+  const confirm = document.getElementById('craftQtyConfirm');
+  confirm.disabled = (q < 1 || q > craftQtyState.max);
+}
+
+function openCraftQtyModal(itemName){
+  const modal = document.getElementById('craftQtyModal');
+  const back  = document.getElementById('modalBackdrop');
+  const title = document.getElementById('craftQtyTitle');
+  const maxEl = document.getElementById('craftQtyMax');
+  const input = document.getElementById('craftQtyInput');
+
+  const recipe = craftingRecipes[itemName];
+  if (!recipe) return;
+
+  craftQtyState.item = itemName;
+  craftQtyState.max  = computeMaxCraftable(recipe);
+
+  title.textContent = `Craft: ${itemName}`;
+  maxEl.textContent = craftQtyState.max;
+
+  // seed quantity
+  input.min = 1;
+  input.value = craftQtyState.max > 0 ? 1 : 0;
+
+  // wire handlers (idempotent – reassign each open)
+  document.getElementById('craftQtyMaxBtn').onclick = () => {
+    input.value = craftQtyState.max;
+    setCraftQtyUI(craftQtyState.max);
+  };
+  document.getElementById('craftQtyCancel').onclick = closeCraftQtyModal;
+  document.getElementById('craftQtyClose').onclick  = closeCraftQtyModal;
+
+  input.oninput = () => {
+    const q = Math.max(0, Math.floor(Number(input.value) || 0));
+    setCraftQtyUI(q);
+  };
+
+  document.getElementById('craftQtyConfirm').onclick = () => {
+    const q = Math.min(craftQtyState.max, Math.max(0, Math.floor(Number(input.value) || 0)));
+    if (q <= 0) return;
+    craftMultiple(itemName, q);
+    closeCraftQtyModal();
+    openInfoModal('Crafting Complete', `You crafted ${q} × ${itemName}!`);
+  };
+
+  setCraftQtyUI(Number(input.value));
+  back.hidden = false;
+  modal.hidden = false;
+}
+
+function closeCraftQtyModal(){
+  const modal = document.getElementById('craftQtyModal');
+  modal.hidden = true;
+
+  // keep backdrop if another modal is open
+  const settingsOpen = document.getElementById('settingsModal')?.hidden === false;
+  const skillsOpen   = document.getElementById('skillsModal')?.hidden === false;
+  const resultOpen   = document.getElementById('resultModal')?.hidden === false;
+  if (!settingsOpen && !skillsOpen && !resultOpen) {
+    document.getElementById('modalBackdrop').hidden = true;
+  }
+}
+
+function craftMultiple(itemName, qty){
+  const recipe = craftingRecipes[itemName];
+  if (!recipe) return;
+
+  // deduct materials
+  for (const [mat, need] of Object.entries(recipe.materials)){
+    inventory[mat] = (inventory[mat] || 0) - (need * qty);
+  }
+  // add results
+  const out = recipe.result || itemName;
+  inventory[out] = (inventory[out] || 0) + qty;
+
+  // refresh UI + save
+  updateInventory();
+  renderEquipmentSlots();
+  updatePlayerStats();
+  saveGameData();
+}
+
 // Function to display weapons or armor in the UI
 function displayItems(itemCategory) {
   const container = document.getElementById('items-container');
@@ -1350,7 +1456,7 @@ function displayItems(itemCategory) {
     btn.className = 'btn-sm';
     btn.disabled = !canCraft;
     btn.textContent = canCraft ? `Craft` : `Can't Craft`;
-    if (canCraft) btn.onclick = () => craftItem(itemName);
+    if (canCraft) btn.onclick = () => openCraftQtyModal(itemName);
 
     card.append(icon, name, meta, actions);
     actions.appendChild(btn);

@@ -1297,6 +1297,51 @@ body.modal-open {
 
 #resultModal button:hover { filter: brightness(1.05); }
 
+/* === Craft Qty Modal === */
+#craftQtyModal[hidden]{ display:none !important; }
+.craftqty-modal{
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 92vw);
+  background: #1d2330;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.cq-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.1);
+}
+.cq-header h3{ margin:0; font-size:1.1rem; }
+.cq-x{
+  width:32px; height:32px; border:none; border-radius:8px;
+  background:#374151; color:#fff; cursor:pointer; opacity:.9;
+}
+.cq-x:hover{ opacity:1; }
+
+.cq-body{ padding:14px 16px; display:grid; gap:12px; }
+.cq-row{ display:grid; grid-template-columns: 1fr auto; align-items:center; gap:12px; }
+.cq-qty{ display:flex; gap:8px; }
+#craftQtyInput{
+  width: 100px; padding:8px; border-radius:8px; border:1px solid rgba(255,255,255,.25);
+  background:#111827; color:#fff;
+}
+
+.cq-mats{
+  font-size:.9rem; opacity:.9; text-align:left;
+  padding:10px; border:1px solid rgba(255,255,255,.12); border-radius:8px;
+  background: rgba(255,255,255,.06);
+}
+
+.cq-actions{
+  display:flex; justify-content:flex-end; gap:10px;
+  padding:12px 16px; border-top:1px solid rgba(255,255,255,.1);
+}
+
 @media (max-height: 720px){
   :root{
     --arena-h: 68vh;
