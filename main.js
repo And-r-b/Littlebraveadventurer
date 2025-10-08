@@ -443,6 +443,7 @@ async function continueFromMenu() {
   updateInventory?.();
   selectMonster?.();
   restoreGatheringCooldown?.();
+  renderSkillHotbar();
 
   // music swap
   stopTitleMusic?.();
@@ -1289,7 +1290,71 @@ window.useSkill = function(name) {
   saveGameData?.();        // persist new timers
   renderSkills();          // refresh the cards
   renderBuffBar();
+  renderSkillHotbar();
 };
+
+// === Hotbar ===
+let hotbarTickers = {};
+
+function renderSkillHotbar(){
+  const bar = document.getElementById('skillHotbar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  Object.keys(SKILL_DEFS).forEach(name => {
+    const def = SKILL_DEFS[name];
+    if (!def) return;
+    const { activeLeft, cdLeft } = def.getState ? def.getState() : {activeLeft:0, cdLeft:0};
+
+    const btn = document.createElement('button');
+    btn.className = 'skill-btn';
+    btn.id = `hb-${name}`;
+    btn.disabled = (activeLeft > 0) || (cdLeft > 0);
+    btn.innerHTML = `
+      <span class="label">${name}</span>
+      <img src="${def.icon}" alt="${name}">
+      <span class="cd" id="hbcd-${name}">
+        ${
+          activeLeft > 0 ? `Active ${mmss(activeLeft)}`
+          : cdLeft > 0   ? `CD ${mmss(cdLeft)}`
+          : 'Ready'
+        }
+      </span>
+    `;
+    btn.addEventListener('click', () => useSkill(name));
+    bar.appendChild(btn);
+
+    startHotbarTicker(name);
+  });
+}
+
+function startHotbarTicker(name){
+  const def = SKILL_DEFS[name];
+  const cd = document.getElementById(`hbcd-${name}`);
+  const btn = document.getElementById(`hb-${name}`);
+  if (!def || !cd || !btn) return;
+
+  // Clear previous ticker for this skill
+  if (hotbarTickers[name]) { clearInterval(hotbarTickers[name]); }
+
+  hotbarTickers[name] = setInterval(() => {
+    const { activeLeft, cdLeft } = def.getState();
+    if (activeLeft > 0){
+      cd.textContent = `Active ${mmss(activeLeft)}`;
+      btn.disabled = true;
+      return;
+    }
+    if (cdLeft > 0){
+      cd.textContent = `CD ${mmss(cdLeft)}`;
+      btn.disabled = true;
+      return;
+    }
+    cd.textContent = 'Ready';
+    btn.disabled = false;
+    clearInterval(hotbarTickers[name]);
+    hotbarTickers[name] = null;
+  }, 1000);
+}
 
 // Fallback icon element if image missing
 function iconEl(name){
@@ -1793,6 +1858,7 @@ function selectStarterKit(starter) {
     renderEquipmentSlots?.();
     renderEquipmentPanel?.();
     updateInventory?.();
+    renderSkillHotbar();
     startGameplayAfterFade(2100);
     return;
   }
@@ -1823,6 +1889,7 @@ function selectStarterKit(starter) {
   renderEquipmentSlots?.();
   renderEquipmentPanel?.();
   updateInventory?.();
+  renderSkillHotbar();
 
   saveGameData?.();                   // persist starter choice
 
@@ -2709,6 +2776,7 @@ async function initSaves() {
 
   try { resumeSkillsFromSave?.(savedSkills); } catch {}
   renderBuffBar();
+  renderSkillHotbar();
 }
 
 

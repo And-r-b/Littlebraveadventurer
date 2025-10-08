@@ -243,6 +243,36 @@ body {
   background:#111827; color:#fff; border:1px solid rgba(255,255,255,0.25);
 }
 
+/* === Skill Hotbar (click-to-use, shows cooldown) === */
+.skill-hotbar{
+  display:flex; gap:10px; align-items:center;
+  margin:6px 0 12px;
+}
+.skill-btn{
+  position:relative; width:48px; height:48px;
+  border-radius:10px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.35); backdrop-filter: blur(2px);
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer;
+}
+.skill-btn img{
+  width:100%; height:100%; object-fit:contain;
+}
+.skill-btn .cd{
+  position:absolute; left:4px; bottom:4px;
+  font-size:11px; line-height:1; padding:3px 6px; border-radius:999px;
+  background:#111827; color:#fff; border:1px solid rgba(255,255,255,.25);
+}
+.skill-btn[disabled]{
+  opacity:.6; cursor:not-allowed; filter:saturate(.6);
+}
+.skill-btn .label{
+  position:absolute; top:4px; left:4px; right:4px;
+  font-size:10px; line-height:1; text-align:center;
+  background:rgba(0,0,0,.35); border-radius:6px; padding:2px 4px;
+}
+
   /* Inventory Column */
   #inventory {
     width: 90%;
