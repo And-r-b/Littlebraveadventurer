@@ -1753,10 +1753,10 @@ function renderEquipmentSlots() {
 }
 
 function renderEquipmentPanel() {
-  const w = document.getElementById('equipPanelWeapon');
-  const a = document.getElementById('equipPanelArmor');
-  const atk = document.getElementById('equipPanelAttack');
-  const def = document.getElementById('equipPanelDefense');
+  const w = document.getElementById('eqWeapon');
+  const a = document.getElementById('eqArmor');
+  const atk = document.getElementById('statAtk');
+  const def = document.getElementById('statDef');
 
   if (!w || !a || !atk || !def) return; // guard if panel not in DOM yet
 
