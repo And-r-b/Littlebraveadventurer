@@ -535,6 +535,15 @@ function toggleEquip(itemName) {
 }
 
 
+let isFighting = false;
+
+function setFightButtonState(disabled, label){
+  const btn = document.getElementById('fightBtn');
+  if (!btn) return;
+  btn.disabled = !!disabled;
+  if (label) btn.textContent = label;
+}
+
 // Construct of what monsters that is available
 const monsters = {
     "Slime": { hp: 20, attack: [4, 8], drops: ["Slime Goo", "Sticky Residue"] },
@@ -1093,6 +1102,7 @@ const ITEM_ICONS = {
   "Water": "images/items/water.png",
   "Herb": "images/items/herb.png",
   "Coal": "images/items/coal.png",
+  "Meat": "images/items/meat.png",
   "Slime Goo": "images/items/slime-goo.png",
   "Sticky Residue": "images/items/sticky-res.png",
   "Wolf Pelt": "images/items/wolf-pelt.png",
@@ -2344,8 +2354,13 @@ function awardKillAchievements(monsterType) {
 // Fighting Function
 
 function fightMonster() {
+  // Prevent multiple clicks
+  if (isFighting) return;
+  isFighting = true;
+  setFightButtonState(true, "Fighting..."); // <<< disable button
+
+  
   // Use the globally selected monster (set by the modal)
-  // Fallback: first monster of the current/first area
   const mName =
     selectedMonster ||
     (AREA_DEFS[selectedArea] || [])[0] ||
@@ -2390,6 +2405,10 @@ function fightMonster() {
       monster.hp = monsters[mName].hp;
       resetMonsterBar(mName);
       awardKillAchievements(mName);
+
+       // <<< re-enable after fight ends
+      isFighting = false;
+      setFightButtonState(false, "Fight Monster");
       return;
     }
 
@@ -2416,6 +2435,10 @@ function fightMonster() {
       openResultModal('lose', mName);
       saveGameData();
       clearInterval(battleInterval);
+
+       // <<< re-enable after fight ends
+      isFighting = false;
+      setFightButtonState(false, "Fight Monster");
       return;
     }
   }, 1000);

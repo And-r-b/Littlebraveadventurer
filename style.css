@@ -731,6 +731,13 @@ body {
   cursor: not-allowed; /* Change cursor to not-allowed */
 }
 
+.fight-button:disabled{
+  background: #6c757d;
+  cursor: not-allowed;
+  filter: none;
+  opacity: .8;
+}
+
   
 /* Contain the fight area so the page never needs to scroll */
 .fight-container{
