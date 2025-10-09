@@ -3017,27 +3017,60 @@ const resultModal = document.getElementById('resultModal');
 const resultTitle = document.getElementById('resultTitle');
 const resultText  = document.getElementById('resultText');
 const resultPrimary   = document.getElementById('resultPrimary');   // OK
+const resultSecondary = document.getElementById('resultSecondary'); // Fight Again
 const modalBackdrop   = document.getElementById('modalBackdrop');
 
 function openResultModal(outcome, monsterName, dropName = null) {
-  // outcome: 'win' | 'lose'
   const won = outcome === 'win';
+
+  // default: hide secondary in case it was shown before
+  if (resultSecondary) {
+    resultSecondary.hidden = true;
+    resultSecondary.onclick = null;
+    resultSecondary.disabled = false;
+  }
+
   resultTitle.textContent = won ? 'Victory!' : 'Defeated';
   resultText.textContent  = won
     ? `You defeated ${monsterName}!${dropName ? ' You found: ' + dropName + '.' : ''}`
     : `You were defeated by ${monsterName}!`;
 
-  // wire buttons each time (simple and safe)
-  resultPrimary.onclick = closeResultModal; // OK just closes
+  // OK closes
+  resultPrimary.onclick = closeResultModal;
 
-  // show
+  // show Fight Again ONLY on victory
+  if (won && resultSecondary) {
+    resultSecondary.hidden = false;
+    resultSecondary.textContent = 'Fight Again';
+    resultSecondary.onclick = () => {
+      resultSecondary.disabled = true;
+      closeResultModal();
+      if (typeof fightMonster === 'function') fightMonster(); // guarded by isFighting
+    };
+  }
+
   modalBackdrop.hidden = false;
   resultModal.hidden = false;
   document.body.classList.add('modal-open');
 }
 
+// Clicking outside the modal closes it (but keeps the OK button usable)
+if (modalBackdrop) {
+  modalBackdrop.addEventListener('click', () => {
+    // only close if the result modal is the one open right now
+    const resultOpen = resultModal && resultModal.hidden === false;
+    if (resultOpen) closeResultModal();
+  });
+}
+
 // Generic info modal (reuse the same DOM)
 function openInfoModal(title, text, primaryLabel = "OK") {
+  // hard-hide secondary for ANY non-combat info (crafting/gathering/etc.)
+  if (resultSecondary) {
+    resultSecondary.hidden = true;
+    resultSecondary.onclick = null;
+  }
+
   resultTitle.textContent = title;
   resultText.textContent  = text;
   resultPrimary.textContent = primaryLabel;
