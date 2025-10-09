@@ -1152,7 +1152,7 @@ const SKILL_DEFS = {
     use: () => {
       const before = playerHP;
       playerHP = Math.min(100, playerHP + 50);
-      updatePlayerHPUI?.();
+      updatePlayerHPUI();
       if (playerHP > before) playSound?.("sounds/heal.mp3");
       // start cooldown timestamp
       prayCooldownUntil = Date.now() + (SKILL_DEFS.Pray.cooldown * 1000);
@@ -1597,6 +1597,7 @@ function useConsumable(itemName) {
   // Apply effects
   if (item.effect.heal) {
     playerHP = Math.min(playerHP + item.effect.heal, 100); // cap at max HP
+    updatePlayerHPUI();
     document.getElementById("playerHealthText").innerText = playerHP;
     document.getElementById("playerHealth").style.width = `${playerHP}%`;
   }
@@ -2950,8 +2951,17 @@ function updatePlayerHPUI() {
   const bar  = document.getElementById("playerHealth");
   const text = document.getElementById("playerHealthText");
   const clamped = Math.max(0, Math.min(100, Number(playerHP) || 0));
-  if (bar)  bar.style.width = clamped + "%";
-  if (text) text.textContent = clamped;
+  if (!bar || !text) return;
+
+  // width + number
+  bar.style.width = clamped + "%";
+  text.textContent = clamped;
+
+  // color via classes (cleaner than inline color)
+  bar.classList.remove("hp-green", "hp-yellow", "hp-red");
+  if (clamped > 50)      bar.classList.add("hp-green");
+  else if (clamped > 20) bar.classList.add("hp-yellow");
+  else                   bar.classList.add("hp-red");
 }
 
 function openSkillsModal() {
