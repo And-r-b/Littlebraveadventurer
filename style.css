@@ -834,15 +834,9 @@ body {
   .health-bars {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     padding: 10px 20px;
     transition: backdrop-filter 0.5s ease-in-out; /* Smooth transition for blur effect */
-  }
-  .buff-spacer{ 
-    display:flex; 
-    gap:8px; 
-    align-items:center;
-    margin:8px 0 12px; 
   }
   
   /* Health Bar Container for each */
@@ -852,6 +846,12 @@ body {
     flex-direction: column;
     align-items: center;
   }
+
+.health-bar-container p {
+  margin: 0 0 6px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
 
  /* Health bars & controls don’t expand vertically */
   .health-bar-container,
@@ -866,6 +866,12 @@ body {
   .monster-side {
     align-items: flex-end;
   }
+
+  /* Fine-tune spacing for text above bars */
+.player-side p,
+.monster-side p {
+  margin-bottom: 4px;
+}
   
   /* Health Bar */
   .health-bar {
