@@ -418,8 +418,11 @@ async function startNewGameFromMenu() {
 
   // reset minimal runtime state
   playerHP = 100;
+  updatePlayerHPUI();
   equipment = { weapon: "Stick", attack: 5, armor: "Clothes", defense: 0 };
   inventory = { "Iron Ore": 0, "Wood": 0, "Leather": 0, "Steel Ore": 0 };
+
+  resetPlayerBar(playerHP);
 
   // swap to Starter screen, keep title music for now
   document.getElementById('mainMenu').style.display = 'none';
@@ -2528,26 +2531,35 @@ function awardKillAchievements(monsterType) {
 // Fighting Function
 
 function fightMonster() {
-  // Prevent multiple clicks
-  if (isFighting) return;
-  isFighting = true;
-  setFightButtonState(true, "Fighting..."); // <<< disable button
-
-  
-  // Use the globally selected monster (set by the modal)
+  // Pick target first
   const mName =
     selectedMonster ||
     (AREA_DEFS[selectedArea] || [])[0] ||
     (AREA_DEFS[Object.keys(AREA_DEFS)[0]] || [])[0];
 
-  if (!mName || !monsters[mName]) return;
+  if (!mName || !monsters[mName]) {
+    console.warn("No valid monster to fight");
+    return;
+  }
+
+  // Prevent double-starts
+  if (isFighting) return;
+  isFighting = true;
+  setFightButtonState(true, "Fighting...");
 
   document.getElementById("message").innerText = "";
 
-  // Fresh working copy so we can mutate hp locally during the fight
+  // Fresh copy we can mutate
   let monster = { ...monsters[mName], hp: monsters[mName].hp };
 
-  const battleInterval = setInterval(() => {
+  let battleInterval; // so endFight can clear it
+  const endFight = (label = "Fight Monster") => {
+    clearInterval(battleInterval);
+    isFighting = false;
+    setFightButtonState(false, label);
+  };
+
+  battleInterval = setInterval(() => {
     // ===== Player attacks =====
     const baseAtk = (equipment.attack || 0) + (empowerActive ? 10 : 0);
     let playerDamage = Math.floor(Math.random() * Math.max(1, baseAtk)) + 1;
@@ -2560,29 +2572,23 @@ function fightMonster() {
     }
 
     if (monster.hp < 0) monster.hp = 0;
-
     updateHealthBars(playerHP, monster, mName);
 
     // ===== Monster defeated? =====
     if (monster.hp === 0) {
       const drop = monster.drops[Math.floor(Math.random() * monster.drops.length)];
-      openResultModal('win', mName, drop);
+      openResultModal("win", mName, drop);
 
-      // loot + UI
       inventory[drop] = (inventory[drop] || 0) + 1;
       updateInventory();
-
       saveGameData();
-      clearInterval(battleInterval);
 
-      // reset UI bar and achievements
+      // reset UI bar + achievements
       monster.hp = monsters[mName].hp;
       resetMonsterBar(mName);
       awardKillAchievements(mName);
 
-       // <<< re-enable after fight ends
-      isFighting = false;
-      setFightButtonState(false, "Fight Monster");
+      endFight();
       return;
     }
 
@@ -2590,29 +2596,20 @@ function fightMonster() {
     const monsterDamage =
       Math.floor(Math.random() * (monster.attack[1] - monster.attack[0] + 1)) + monster.attack[0];
 
-    // Apply defense
     let effectiveDamage = Math.max(0, monsterDamage - (equipment.defense || 0));
-
-    // Bulwark: halve incoming damage while active
-    if (bulwarkActive) {
-      effectiveDamage = Math.floor(effectiveDamage * 0.5);
-    }
+    if (bulwarkActive) effectiveDamage = Math.floor(effectiveDamage * 0.5);
 
     playerHP -= effectiveDamage;
+    if (playerHP < 0) playerHP = 0;
 
     updateHealthBars(playerHP, monster, mName);
     saveGameData();
 
     // ===== Player defeated? =====
-    if (playerHP <= 0) {
-      playerHP = 0;
-      openResultModal('lose', mName);
+    if (playerHP === 0) {
+      openResultModal("lose", mName);
       saveGameData();
-      clearInterval(battleInterval);
-
-       // <<< re-enable after fight ends
-      isFighting = false;
-      setFightButtonState(false, "Fight Monster");
+      endFight();
       return;
     }
   }, 1000);
@@ -2638,6 +2635,7 @@ async function startNewGame() {
 
     // 3) Reset player stats to default values
     playerHP = 100;
+    updatePlayerHPUI();
     inventory = {
         "Iron Ore": 0,
         "Wood": 0,
@@ -2651,6 +2649,8 @@ async function startNewGame() {
         armor: "None",
         defense: 0
     };
+
+    resetPlayerBar(playerHP);
 
     // 4) Reset Pray Cooldown Variables
     prayCooldownActive = false;
@@ -2963,6 +2963,27 @@ function updatePlayerHPUI() {
   else if (clamped > 20) bar.classList.add("hp-yellow");
   else                   bar.classList.add("hp-red");
 }
+
+function resetPlayerBar(hp = 100) {
+  const bar  = document.getElementById("playerHealth");
+  const text = document.getElementById("playerHealthText");
+  const clamped = Math.max(0, Math.min(100, Number(hp) || 0));
+  if (!bar || !text) return;
+
+  // width + number
+  bar.style.width = clamped + "%";
+  text.textContent = clamped;
+
+  // keep both systems happy (class-based & inline)
+  bar.classList?.remove("hp-green", "hp-yellow", "hp-red");
+  if (clamped > 50)      bar.classList?.add("hp-green");
+  else if (clamped > 20) bar.classList?.add("hp-yellow");
+  else                   bar.classList?.add("hp-red");
+
+  // inline fallback in case classes aren’t present
+  bar.style.backgroundColor = clamped > 50 ? "green" : clamped > 20 ? "yellow" : "red";
+}
+
 
 function openSkillsModal() {
   // hide non-modal panels

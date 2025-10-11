@@ -563,9 +563,6 @@ body {
 #playerHealth {
   transition: width 0.25s linear, background-color 0.2s linear;
 }
-.hp-green  { background: #2ecc71; }  /* green */
-.hp-yellow { background: #f1c40f; }  /* yellow */
-.hp-red    { background: #e74c3c; }  /* red   */
 
 #monsterHealthBar {
   width: 250px;
@@ -904,6 +901,10 @@ body {
     color: white;
     font-weight: bold;
   }
+
+.hp-green  { background: #2ecc71; }  /* green */
+.hp-yellow { background: #f1c40f; }  /* yellow */
+.hp-red    { background: #e74c3c; }  /* red   */
   
   /* Health Bar Text (inside the bar) */
   .health-bar span {
